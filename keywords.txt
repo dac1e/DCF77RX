@@ -1,0 +1,18 @@
+#######################################
+# Syntax Coloring Map For Dcf77Receiver
+#######################################
+
+#######################################
+# Datatypes
+#######################################
+
+Dcf77Receiver	KEYWORD1
+Dcf77tm			KEYWORD1
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+
+begin				KEYWORD2
+dcf77bits2tm		KEYWORD2
+processReceivedBits	KEYWORD2
