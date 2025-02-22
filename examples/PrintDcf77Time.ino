@@ -34,13 +34,13 @@
 #define DETECT_FIFO_OVERFLOW false
 
 static constexpr size_t FIFO_SIZE = 6;
-static constexpr int DCF77_PIN = 23;
+static constexpr int DCF77_PIN = 2;
 
 class MyDcf77Receiver : public Dcf77Receiver<DCF77_PIN, FIFO_SIZE> {
   using baseClass = Dcf77Receiver<DCF77_PIN, FIFO_SIZE>;
 
   void onDcf77FrameReceived(const uint64_t dcf77frame) override {
-    // convert bit to time structure.
+    // convert frame to time structure.
     Dcf77tm time;
     dcf77frame2time(time, dcf77frame);
     Serial.println(time);
@@ -64,6 +64,9 @@ MyDcf77Receiver myReceiver;
 void setup()
 {
   Serial.begin(9600);
+  delay(300);
+  Serial.println("-------- PrintDcf77Time ---------");
+  Serial.println("First frame may take some minutes");
   myReceiver.begin();
 }
 

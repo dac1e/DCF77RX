@@ -36,9 +36,31 @@ size_t Dcf77tm::printTo(Print& p) const {
 
 #else
 
-size_t Dcf77tm::printTo(Print& p) const override {
-  // TBD
-  return 0;
+static const char* MO[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
+static const char* WD[] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
+
+size_t Dcf77tm::printTo(Print& p) const {
+  size_t n = 0;
+
+  n+= p.print(WD[tm_wday]); // day of week
+  n+= p.print(" ");
+  n+= p.print(MO[tm_mon]);  // month
+  n+= p.print(" ");
+  n+= p.print(tm_mday);     // day of month
+
+  n+= p.print(" ");
+  if(tm_hour < 10) {n+= p.print('0');}
+  n+= p.print(tm_hour); // hour
+  n+= p.print(":");
+  if(tm_min < 10) {n+= p.print('0');}
+  n+= p.print(tm_min);  // minute
+  n+= p.print(":");
+  if(tm_sec < 10) {n+= p.print('0');}
+  n+= p.print(tm_sec);  // second
+
+  n+= p.print(" ");
+  n+= p.print(tm_year + 1900); // year
+  return n;
 }
 
 #endif
