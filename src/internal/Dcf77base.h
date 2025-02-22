@@ -43,17 +43,17 @@ class Dcf77Base {
 	size_t 					mRxCurrentBitBufferPosition = 0;
 	uint64_t 				mRxBitBuffer = 0;
 protected:
-	static void dcf77bits2tm(Dcf77tm &time, const uint64_t& dcf77bits);
+	static void dcf77frame2time(Dcf77tm &time, const uint64_t& dcf77frame);
 	void begin(int pin, void (*intHandler)());
 
 	void processReceivedBits();
-	virtual void onDcf77BitsReceived(const uint64_t dcf77bits) = 0;
+	virtual void onDcf77FrameReceived(const uint64_t dcf77frame) = 0;
 
 	void appendReceivedBit(const unsigned int signalBit);
-	bool concludeReceivedBits(uint64_t& dcf77bits);
+	bool concludeReceivedBits(uint64_t& dcf77frame);
 
 	virtual bool popPulse(Dcf77pulse &pulse) = 0;
-	virtual void pushPulse(const Dcf77pulse &pulse) = 0;
+	virtual bool pushPulse(const Dcf77pulse &pulse) = 0;
 public:
 	void onPinInterrupt(int pin);
 };

@@ -83,8 +83,8 @@ void Dcf77Base::onPinInterrupt(int pin) {
 	pushPulse(dcf77signal);
 }
 
-void Dcf77Base::dcf77bits2tm(Dcf77tm &time, const uint64_t& dcf77bits) {
-	const DCF77bits& bits = reinterpret_cast<const DCF77bits&>(dcf77bits);
+void Dcf77Base::dcf77frame2time(Dcf77tm &time, const uint64_t& dcf77frame) {
+	const DCF77bits& bits = reinterpret_cast<const DCF77bits&>(dcf77frame);
 	time.tm_sec = 0;
 	time.tm_min = bits.Min - ((bits.Min / 16) * 6);
 	time.tm_hour = bits.Hour - ((bits.Hour / 16) * 6);
@@ -100,18 +100,18 @@ void Dcf77Base::dcf77bits2tm(Dcf77tm &time, const uint64_t& dcf77bits) {
  * Evaluates the information stored in the buffer. This is where the DCF77
  * signal is decoded and the internal clock is updated.
  */
-bool Dcf77Base::concludeReceivedBits(uint64_t& dcf77bits) {
+bool Dcf77Base::concludeReceivedBits(uint64_t& dcf77frame) {
 	bool successfullUpdate = mRxCurrentBitBufferPosition == 59;
-	dcf77bits = mRxBitBuffer;
+	dcf77frame = mRxBitBuffer;
 
 	// reset buffer
 	mRxCurrentBitBufferPosition = 0;
 	mRxBitBuffer = 0;
 
 	if (successfullUpdate) {
-		successfullUpdate = flags.parity_min == reinterpret_cast<struct DCF77bits&>(dcf77bits).P1
-				&& flags.parity_hour == reinterpret_cast<struct DCF77bits&>(dcf77bits).P2
-				&& flags.parity_date == reinterpret_cast<struct DCF77bits&>(dcf77bits).P3;
+		successfullUpdate = flags.parity_min == reinterpret_cast<struct DCF77bits&>(dcf77frame).P1
+				&& flags.parity_hour == reinterpret_cast<struct DCF77bits&>(dcf77frame).P2
+				&& flags.parity_date == reinterpret_cast<struct DCF77bits&>(dcf77frame).P3;
 	}
 
 	return successfullUpdate;
@@ -161,9 +161,9 @@ void Dcf77Base::processReceivedBits() {
 			if (mPreviousDcfSignalState != DCF_SIGNAL_STATE_LOW) {
 				/* falling edge */
 				if ((edgeTime - mPreviousFallingEdgeTime) > DCF_SYNC_MILLIS) {
-					uint64_t dcf77bits;
-					if(concludeReceivedBits(dcf77bits)) {
-						onDcf77BitsReceived(dcf77bits);
+					uint64_t dcf77frame;
+					if(concludeReceivedBits(dcf77frame)) {
+						onDcf77FrameReceived(dcf77frame);
 					}
 				}
 				mPreviousDcfSignalState = dcf77signal.mLevel;

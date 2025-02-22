@@ -22,18 +22,40 @@
   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
 */
 
+/**
+ * Receive frames from dcf77, convert them to Dcf77tm time structure and
+ * print them on Serial.
+ */
+
 #include "Dcf77Receiver.h"
 
-constexpr unsigned int DCF77_PIN = 23;
+// Increase FIFO_SIZE if overflows happen. Overflow may happen, when
+// processReceivedBits() isn't called frequently enough in loop().
+#define DETECT_FIFO_OVERFLOW false
 
-class MyDcf77Receiver : public Dcf77Receiver<DCF77_PIN> {
-  virtual void onDcf77BitsReceived(const uint64_t dcf77bits) override {
+static constexpr size_t FIFO_SIZE = 6;
+static constexpr int DCF77_PIN = 23;
+
+class MyDcf77Receiver : public Dcf77Receiver<DCF77_PIN, FIFO_SIZE> {
+  using baseClass = Dcf77Receiver<DCF77_PIN, FIFO_SIZE>;
+
+  void onDcf77FrameReceived(const uint64_t dcf77frame) override {
     // convert bit to time structure.
     Dcf77tm time;
-    dcf77bits2tm(time, dcf77bits);
+    dcf77frame2time(time, dcf77frame);
     Serial.println(time);
     return;
   }
+
+#if DETECT_FIFO_OVERFLOW
+  bool pushPulse(const Dcf77pulse &pulse) override {
+   const bool ok = baseClass::pushPulse(pulse);
+   if(not ok) {
+     Serial.print("overflow");
+   }
+   return ok;
+  }
+#endif
 };
 
 MyDcf77Receiver myReceiver;
@@ -41,7 +63,6 @@ MyDcf77Receiver myReceiver;
 //The setup function is called once at startup of the sketch
 void setup()
 {
-  // Add your initialization code here
   Serial.begin(9600);
   myReceiver.begin();
 }
@@ -49,6 +70,6 @@ void setup()
 // The loop function is called in an endless loop
 void loop()
 {
-  //Add your repeated code here
+  // Frequently process received bits.
   myReceiver.processReceivedBits();
 }

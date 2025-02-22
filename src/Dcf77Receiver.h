@@ -32,17 +32,19 @@
 #include "internal/Dcf77base.h"
 
 /**
- * Receive dcf77 pulses on a digital pin. The pin to be used is RECEIVER_PIN.
+ * Dcf77Receiver is the main API class. It receives dcf77 pulses on a digital pin.
+ * The pin where the receiver is connected is given by parameter RECEIVER_PIN.
  *
  * Usage:
  *
- * constexpr int PIN = 3;
+ * static constexpr size_t FIFO_SIZE = 6; // FIFO_SIZE is an optional parameter.
+ * static constexpr int PIN = 3;
  *
- * class MyDcf77Receiver : public Dcf77Receiver<PIN> {
- *   virtual void onDcf77BitsReceived(const uint64_t dcf77bits) override {
+ * class MyDcf77Receiver : public Dcf77Receiver<PIN, FIFO_SIZE> {
+ *   void onDcf77BitsReceived(const uint64_t dcf77frame) override {
  *     // convert bit to time structure.
  *     Dcf77tm time;
- *     dcf77bits2tm(time, dcf77bits);
+ *     dcf77frame2time(time, dcf77frame);
  *     ...
  *     return;
  *   }
@@ -63,16 +65,38 @@
  * }
  *
  * As shown in the above example, derive your own class from Dcf77Receiver
- * and overwrite function 'void onDcf77BitsReceived(const uint64_t dcf77bits)'.
+ * and overwrite function 'void onDcf77BitsReceived(const uint64_t dcf77frame)'.
  *
  * The overridden function will be called whenever a valid dcf77 frame has
  * been received. The frame will be passed as uin64_t integer.
  * Do whatever you want with it. E.g. store it somewhere or convert it to a
  * time structure and print it out. For the conversion to a time structure
- * a static function dcf77bits2time() is available.
+ * a static function dcf77frame2time() is available.
  *
  * The time structure is of type std::tm in case the platform supports it.
  * Otherwise it is a proprietary structure with the same fields as std::tm.
+ *
+ * Note: The fifo approach was taken to keep the interrupt handler runtime as
+ *   short as possible. This is important to not delay servicing other
+ *   pending interrupts.
+ *
+ * Important: If you don't call processReceivedBits() frequently enough, the
+ * fifo might overflow. Try to increase the PULSE_FIFO_SIZE in that case.
+ * You can detect overflows by overwriting the function pushPulse in your
+ * derived class and evaluate the result:
+ *
+ * class MyDcf77Receiver : public Dcf77Receiver<PIN, FIFO_SIZE> {
+ *   ...
+ *   using baseClass = Dcf77Receiver<PIN, FIFO_SIZE>;
+ *   bool pushPulse(const Dcf77pulse &pulse) override {
+ *     const bool ok = baseClass::pushPulse(pulse);
+ *     if(not ok) {
+ *       Serial.print("overflow");
+ *     }
+ *     return ok;
+ *   }
+ *   ...
+ * };
  */
 template<int RECEIVER_PIN, size_t PULSE_FIFO_SIZE = 6>
 class Dcf77Receiver : public Dcf77util::Dcf77Base {
@@ -97,10 +121,10 @@ public:
 	 * is of type to std::tm in case the platform supports it.
 	 *
 	 * @param[out] time The dcf77 bits as time structure.
-	 * @param[in] dcf77bits The dcf77 frame.
+	 * @param[in] dcf77frame The dcf77 frame.
 	 */
-  inline static void dcf77bits2tm(Dcf77tm &time, const uint64_t& dcf77bits) {
-    Dcf77util::Dcf77Base::dcf77bits2tm(time, dcf77bits);
+  inline static void dcf77frame2time(Dcf77tm &time, const uint64_t& dcf77frame) {
+    Dcf77util::Dcf77Base::dcf77frame2time(time, dcf77frame);
   }
 
 	/**
@@ -113,10 +137,11 @@ public:
     Dcf77util::Dcf77Base::processReceivedBits();
   }
 
-private:
+protected:
 	typedef Dcf77util::Fifo<Dcf77pulse, PULSE_FIFO_SIZE> PulseFifo;
 	PulseFifo mPulseFifo;
 
+private:
 	/* The instance that is responsible for pin RECEIVE_PIN. */
 	static Dcf77Base* mInstance;
 
@@ -124,9 +149,12 @@ private:
 	 * Push a received pulse to the fifo. That function
 	 * will be called by the interrupt handler when a
 	 * pulse has been received.
+	 *
+   * @return true, if successful. false if the value
+   *   couldn't be pushed due to an overflow.
 	 */
-	void pushPulse(const Dcf77pulse &pulse) override {
-		mPulseFifo.push(pulse);
+	bool pushPulse(const Dcf77pulse &pulse) override {
+		return mPulseFifo.push(pulse);
 	}
 
 	/**

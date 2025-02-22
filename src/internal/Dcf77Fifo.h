@@ -24,8 +24,8 @@
 
 #pragma once
 
-#ifndef DCF77UTIL_FIFO_HPP_
-#define DCF77UTIL_FIFO_HPP_
+#ifndef DCF77_INTERNAL_UTIL_FIFO_HPP_
+#define DCF77_INTERNAL_UTIL_FIFO_HPP_
 
 #include <stddef.h>
 
@@ -47,12 +47,17 @@ public:
 	 * the fifo is full.
 	 *
 	 * @param[in] value The value to be pushed to the fifo.
+	 *
+	 * @return true, if successful. false if the value
+	 *   couldn't be pushed due to an overflow.
 	 */
-	void push(const element_type &value) {
+	bool push(const element_type &value) {
 		if (indexDifference() < (SIZE - 1)) {
 			writeIndex = (writeIndex + 1) % SIZE;
 			mArray[writeIndex] = value;
+			return true;
 		}
+		return false;
 	}
 
 	/**
@@ -75,4 +80,4 @@ public:
 
 } // namespace Dcf77util
 
-#endif /* DCF77UTIL_FIFO_HPP_ */
+#endif /* DCF77_INTERNAL_UTIL_FIFO_HPP_ */

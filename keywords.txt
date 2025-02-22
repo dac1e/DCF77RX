@@ -13,6 +13,7 @@ Dcf77tm			KEYWORD1
 # Methods and Functions (KEYWORD2)
 #######################################
 
-begin				KEYWORD2
-dcf77bits2tm		KEYWORD2
-processReceivedBits	KEYWORD2
+begin					KEYWORD2
+dcf77frame2time			KEYWORD2
+onDcf77FrameReceived	KEYWORD2
+processReceivedBits		KEYWORD2
