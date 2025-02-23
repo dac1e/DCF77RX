@@ -46,7 +46,7 @@ class MyDcf77Receiver : public Dcf77Receiver<DCF77_PIN, FIFO_SIZE> {
     // convert frame to time structure.
     Dcf77tm time;
     dcf77frame2time(time, dcf77frame);
-    Serial.print("Received frame: ");
+    Serial.print("Dcf77 frame received: ");
     Serial.println(time);
   }
 
@@ -86,7 +86,7 @@ void loop()
     Serial.print('[');
     Serial.print(counter);
     Serial.print("s]");
-    Serial.print(" Waiting for dcf77 frame on Arduino pin ");
+    Serial.print(" Waiting for completion of Dcf77 frame on Arduino pin ");
     Serial.println(DCF77_PIN);
     counter += PRINTOUT_PERIOD;
     lastSystick = systick;

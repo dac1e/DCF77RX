@@ -29,6 +29,7 @@
 
 #include "Dcf77Receiver.h"
 
+#define PRINT_DCF77FRAME_EVENT true
 
 // Increase FIFO_SIZE if overflows happen. Overflow may happen, when
 // processReceivedBits() isn't called frequently enough in loop().
@@ -67,6 +68,12 @@ private:
   void onDcf77FrameReceived(const uint64_t dcf77frame) override {
     mSystickAtLastFrame = millis();
     mLastDcf77Frame = dcf77frame;
+#if PRINT_DCF77FRAME_EVENT
+    Dcf77tm time;
+    dcf77frame2time(time, dcf77frame);
+    Serial.print("Dcf77 frame received: ");
+    Serial.println(time);
+#endif
   }
 
 #if DETECT_FIFO_OVERFLOW
@@ -118,7 +125,7 @@ void loop()
       Serial.print('[');
       Serial.print(counter);
       Serial.print("s]");
-      Serial.print(" Waiting for dcf77 frame on Arduino pin ");
+      Serial.print(" Waiting for completion of Dcf77 frame on Arduino pin ");
       Serial.println(DCF77_PIN);
       counter += PRINTOUT_PERIOD;
     }
