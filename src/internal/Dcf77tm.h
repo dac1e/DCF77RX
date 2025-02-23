@@ -66,9 +66,9 @@
     int year() const {return tm_year + TM_YEAR_BASE;}
 
     Dcf77time_t toTimeStamp() const;
-    void set(const std::time_t timestamp, const uint8_t isdst);
+    void set(const Dcf77time_t timestamp, const uint8_t isdst);
 
-    const Dcf77time_t& operator+=(const Dcf77time_t& sec);
+    const Dcf77tm& operator+=(const Dcf77time_t& sec);
 
     int tm_sec;
     int tm_min;

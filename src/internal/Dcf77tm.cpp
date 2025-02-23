@@ -137,7 +137,7 @@ Dcf77time_t Dcf77tm::toTimeStamp() const {
   return result;
 }
 
-void Dcf77tm::set(const std::time_t timestamp, const uint8_t isdst)
+void Dcf77tm::set(const Dcf77time_t timestamp, const uint8_t isdst)
 {
   long days = timestamp / SECSPERDAY + EPOCH_ADJUSTMENT_DAYS;
   long remain = timestamp % SECSPERDAY;
