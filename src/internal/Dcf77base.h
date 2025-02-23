@@ -38,10 +38,10 @@ namespace Dcf77util {
 class Dcf77Base {
 	struct Dcf77pulse {uint32_t mLength = 0; int mLevel = 1;};
 
-	uint32_t 				mPreviousFallingEdgeTime = 0;
-	int							mPreviousDcfSignalState	= 1;
-	size_t 					mRxCurrentBitBufferPosition = 0;
-	uint64_t 				mRxBitBuffer = 0;
+  uint32_t mPreviousFallingEdgeTime = 0;
+  int mPreviousDcfSignalState = 1;
+  size_t mRxCurrentBitBufferPosition = 0;
+  uint64_t mRxBitBuffer = 0;
 protected:
 	static void dcf77frame2time(Dcf77tm &time, const uint64_t& dcf77frame);
 	void begin(int pin, void (*intHandler)());

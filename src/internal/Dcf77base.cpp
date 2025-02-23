@@ -101,12 +101,12 @@ void Dcf77Base::dcf77frame2time(Dcf77tm &time, const uint64_t& dcf77frame) {
  * signal is decoded and the internal clock is updated.
  */
 bool Dcf77Base::concludeReceivedBits(uint64_t& dcf77frame) {
-	bool successfullUpdate = mRxCurrentBitBufferPosition == 59;
-	dcf77frame = mRxBitBuffer;
+  bool successfullUpdate = mRxCurrentBitBufferPosition == 59;
+  dcf77frame = mRxBitBuffer;
 
-	// reset buffer
-	mRxCurrentBitBufferPosition = 0;
-	mRxBitBuffer = 0;
+  // reset buffer
+  mRxCurrentBitBufferPosition = 0;
+  mRxBitBuffer = 0;
 
 	if (successfullUpdate) {
 		successfullUpdate = flags.parity_min == reinterpret_cast<struct DCF77bits&>(dcf77frame).P1

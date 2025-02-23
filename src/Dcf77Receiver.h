@@ -41,7 +41,7 @@
  * static constexpr int PIN = 3;
  *
  * class MyDcf77Receiver : public Dcf77Receiver<PIN, FIFO_SIZE> {
- *   void onDcf77BitsReceived(const uint64_t dcf77frame) override {
+ *   void onDcf77FrameReceived(const uint64_t dcf77frame) override {
  *     // convert bit to time structure.
  *     Dcf77tm time;
  *     dcf77frame2time(time, dcf77frame);
@@ -65,7 +65,7 @@
  * }
  *
  * As shown in the above example, derive your own class from Dcf77Receiver
- * and overwrite function 'void onDcf77BitsReceived(const uint64_t dcf77frame)'.
+ * and overwrite function 'void onDcf77FrameReceived(const uint64_t dcf77frame)'.
  *
  * The overridden function will be called whenever a valid dcf77 frame has
  * been received. The frame will be passed as uin64_t integer.
@@ -131,7 +131,7 @@ public:
 	 * This function needs to be called frequently in the loop(). It
 	 * will pick up the received pulses that the interrupt
 	 * handler has stored in a fifo. If a complete dcf77 frame has
-	 * been received, the function onDcf77BitsReceived() will be called.
+	 * been received, the function onDcf77FrameReceived() will be called.
 	 */
   inline void processReceivedBits() {
     Dcf77util::Dcf77Base::processReceivedBits();
