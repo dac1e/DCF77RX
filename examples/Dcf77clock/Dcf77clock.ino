@@ -37,29 +37,40 @@
 static constexpr size_t FIFO_SIZE = 6;
 static constexpr int DCF77_PIN = 2;
 
+/**
+ * The clock needs an initial Dcf77 frame to start. Seconds
+ * since the last received Dcf77 are calculated via systick
+ * from function millis() and used to keep the clock running.
+ * The clock need a Dcf77 frame update at least every
+ * 2**32 milliseconds, which is approximately every 49 days.
+ * Otherwise there will be a systick overrun and the clock
+ * will provide wrong results.
+ */
 class Dcf77clock : public Dcf77Receiver<DCF77_PIN, FIFO_SIZE> {
-  uint64_t mLastDcf77Frame;
+  Dcf77time_t mLastDcf77timestamp;
   uint32_t mSystickAtLastFrame;
+  int mIsdst;
 
 public:
-  Dcf77clock() : mLastDcf77Frame(0), mSystickAtLastFrame(0) {}
+  Dcf77clock() : mLastDcf77timestamp(0), mIsdst(-1), mSystickAtLastFrame(0) {}
 
+  /**
+   * Read the current time.
+   *
+   * @param[out] tm. The actual time.
+   * @param[out] millisec The number of expired milliseconds
+   *  within the current second.
+   * @return false, as long as no Dcf77 frame was received.
+   */
   bool getTime(Dcf77tm& tm, unsigned* millisec) {
-    if(mLastDcf77Frame) {
+    if(mIsdst >= 0) {
       // Disable interrupts to avoid race condition.
-      noInterrupts();
       const uint32_t millisSinceLastFrame = millis() - mSystickAtLastFrame;
-      const uint64_t dcf77frame = mLastDcf77Frame;
-      interrupts();
-
-      dcf77frame2time(tm, dcf77frame);
       const uint32_t secSinceLastFrame = millisSinceLastFrame / 1000;
-      tm += secSinceLastFrame;
-
+      tm.set(mLastDcf77timestamp + secSinceLastFrame, mIsdst);
       if(millisec != nullptr) {
         *millisec = millisSinceLastFrame % 1000;
       }
-
       return true;
     }
     return false;
@@ -67,12 +78,13 @@ public:
 private:
   void onDcf77FrameReceived(const uint64_t dcf77frame) override {
     mSystickAtLastFrame = millis();
-    mLastDcf77Frame = dcf77frame;
+    Dcf77tm tm;
+    dcf77frame2time(tm, dcf77frame);
+    mLastDcf77timestamp = tm.toTimeStamp();
+    mIsdst = tm.tm_isdst;
 #if PRINT_DCF77FRAME_EVENT
-    Dcf77tm time;
-    dcf77frame2time(time, dcf77frame);
     Serial.print("Dcf77 frame received: ");
-    Serial.println(time);
+    Serial.println(tm);
 #endif
   }
 

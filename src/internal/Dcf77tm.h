@@ -50,7 +50,6 @@
     Dcf77time_t toTimeStamp() const;
     void set(const std::time_t timestamp, const uint8_t isdst);
 
-    const Dcf77tm& operator+=(const Dcf77time_t& sec);
   private:
     size_t printTo(Print& p) const override;
   };
@@ -68,8 +67,6 @@
     Dcf77time_t toTimeStamp() const;
     void set(const Dcf77time_t timestamp, const uint8_t isdst);
 
-    const Dcf77tm& operator+=(const Dcf77time_t& sec);
-
     int tm_sec;
     int tm_min;
     int tm_hour;
@@ -84,16 +81,6 @@
     size_t printTo(Print& p) const override;
   };
 
-#endif
-  inline const Dcf77tm& Dcf77tm::operator+=(const Dcf77time_t& sec) {
-    if((tm_sec + sec) < 60) {
-      tm_sec += sec;
-    } else {
-      const Dcf77time_t timestamp = toTimeStamp() + sec;
-      set(timestamp, tm_isdst);
-    }
-    return *this;
-  }
-
+#endif /* HAS_STD_CTIME */
 
 #endif /* DCF77QINT_INTERNAL_DCF77TM_H_ */
