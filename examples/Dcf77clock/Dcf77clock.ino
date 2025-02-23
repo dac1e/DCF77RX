@@ -84,6 +84,10 @@ private:
 
 Dcf77clock dcf77Clock;
 
+static constexpr size_t PRINTOUT_PERIOD = 1;
+static uint32_t counter = 0;
+static uint32_t lastSystick = 0;
+
 //The setup function is called once at startup of the sketch
 void setup()
 {
@@ -92,20 +96,19 @@ void setup()
   Serial.println("---------- Dcf77clock -----------");
   Serial.println("First frame may take some minutes");
   dcf77Clock.begin();
+
+  lastSystick = millis() - PRINTOUT_PERIOD * 1000;
 }
 
 
 // The loop function is called in an endless loop
 void loop()
 {
-  static uint32_t lastSystick = 0;
-  static uint32_t counter = 0;
-
   // Frequently process received bits.
   dcf77Clock.processReceivedBits();
 
   const uint32_t systick = millis();
-  if(systick - lastSystick >= 1000) {
+  if(systick - lastSystick >= PRINTOUT_PERIOD * 1000) {
     Dcf77tm tm;
     if(dcf77Clock.getTime(tm, nullptr) ) {
       Serial.print(tm);
@@ -113,9 +116,11 @@ void loop()
       Serial.println(tm.tm_isdst);
     } else {
       Serial.print('[');
-      Serial.print(counter++);
-      Serial.print(']');
-      Serial.println(" Waiting for dcf77 frame.");
+      Serial.print(counter);
+      Serial.print("s]");
+      Serial.print(" Waiting for dcf77 frame on Arduino pin ");
+      Serial.println(DCF77_PIN);
+      counter += PRINTOUT_PERIOD;
     }
     lastSystick = systick;
   }

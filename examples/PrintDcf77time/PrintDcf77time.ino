@@ -35,7 +35,9 @@
 static constexpr size_t FIFO_SIZE = 6;
 static constexpr int DCF77_PIN = 2;
 
+static constexpr size_t PRINTOUT_PERIOD = 3;
 static uint32_t counter = 0;
+static uint32_t lastSystick = 0;
 
 class MyDcf77Receiver : public Dcf77Receiver<DCF77_PIN, FIFO_SIZE> {
   void onDcf77FrameReceived(const uint64_t dcf77frame) override {
@@ -44,6 +46,7 @@ class MyDcf77Receiver : public Dcf77Receiver<DCF77_PIN, FIFO_SIZE> {
     // convert frame to time structure.
     Dcf77tm time;
     dcf77frame2time(time, dcf77frame);
+    Serial.print("Received frame: ");
     Serial.println(time);
   }
 
@@ -69,22 +72,23 @@ void setup()
   Serial.println("-------- PrintDcf77time ---------");
   Serial.println("First frame may take some minutes");
   myReceiver.begin();
+  lastSystick = millis() - PRINTOUT_PERIOD * 1000;
 }
 
 // The loop function is called in an endless loop
 void loop()
 {
-  static uint32_t lastSystick = 0;
-
   // Frequently process received bits.
   myReceiver.processReceivedBits();
 
   const uint32_t systick = millis();
-  if(systick - lastSystick >= 500) {
+  if(systick - lastSystick >= PRINTOUT_PERIOD * 1000) {
     Serial.print('[');
-    Serial.print(counter++);
-    Serial.print(']');
-    Serial.println(" Waiting for dcf77 frame.");
+    Serial.print(counter);
+    Serial.print("s]");
+    Serial.print(" Waiting for dcf77 frame on Arduino pin ");
+    Serial.println(DCF77_PIN);
+    counter += PRINTOUT_PERIOD;
     lastSystick = systick;
   }
 }
