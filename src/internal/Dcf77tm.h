@@ -36,31 +36,64 @@
 #endif
 
 #if HAS_STD_CTIME
-// Use std::tm
-#include <ctime>
-struct Dcf77tm : public std::tm, public Printable {
-  size_t printTo(Print& p) const override;
-};
+  // Use std::tm
+  #include <ctime>
+
+  using Dcf77time_t = std::time_t;
+
+  // See https://en.cppreference.com/w/cpp/chrono/c/tm
+  struct Dcf77tm : public std::tm, public Printable {
+    static constexpr int TM_YEAR_BASE = 1900;
+
+    int year() const {return tm_year + TM_YEAR_BASE;}
+
+    Dcf77time_t toTimeStamp() const;
+    void set(const std::time_t timestamp, const uint8_t isdst);
+
+    const Dcf77tm& operator+=(const Dcf77time_t& sec);
+  private:
+    size_t printTo(Print& p) const override;
+  };
 
 #else
-// Define own std::tm
-struct Dcf77tm : public Printable {
-  int tm_sec;
-  int tm_min;
-  int tm_hour;
-  int tm_mday;
-  int tm_mon;
-  int tm_year;
-  int tm_wday;
-  int tm_yday;
-  int tm_isdst;
+  // Define own std::tm
+  using Dcf77time_t = uint64_t;
 
-  size_t printTo(Print& p) const override;
-};
+  // See https://en.cppreference.com/w/cpp/chrono/c/tm
+  struct Dcf77tm : public Printable {
+    static constexpr int TM_YEAR_BASE = 1900;
 
+    int year() const {return tm_year + TM_YEAR_BASE;}
+
+    Dcf77time_t toTimeStamp() const;
+    void set(const std::time_t timestamp, const uint8_t isdst);
+
+    const Dcf77time_t& operator+=(const Dcf77time_t& sec);
+
+    int tm_sec;
+    int tm_min;
+    int tm_hour;
+    int tm_mday;
+    int tm_mon;   // [0..11]
+    int tm_year;  // years since 1900
+    int tm_wday;
+    int tm_yday;
+    int tm_isdst;
+
+  private:
+    size_t printTo(Print& p) const override;
+  };
 
 #endif
-
+  inline const Dcf77tm& Dcf77tm::operator+=(const Dcf77time_t& sec) {
+    if((tm_sec + sec) < 60) {
+      tm_sec += sec;
+    } else {
+      const Dcf77time_t timestamp = toTimeStamp() + sec;
+      set(timestamp, tm_isdst);
+    }
+    return *this;
+  }
 
 
 #endif /* DCF77QINT_INTERNAL_DCF77TM_H_ */

@@ -11,6 +11,6 @@ void setup() ;
 void loop() ;
 
 
-#include "PrintDcf77Time/PrintDcf77Time.ino"
+#include "Dcf77clock/Dcf77clock.ino"
 
 #endif
