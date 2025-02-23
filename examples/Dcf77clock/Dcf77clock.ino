@@ -99,7 +99,6 @@ static uint32_t lastSystick = 0;
 void setup()
 {
   Serial.begin(9600);
-  delay(300);
   Serial.println("---------- Dcf77clock -----------");
   Serial.println("First frame may take some minutes");
   dcf77Clock.begin();

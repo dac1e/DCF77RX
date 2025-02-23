@@ -68,7 +68,6 @@ MyDcf77Receiver myReceiver;
 void setup()
 {
   Serial.begin(9600);
-  delay(300);
   Serial.println("-------- PrintDcf77time ---------");
   Serial.println("First frame may take some minutes");
   myReceiver.begin();

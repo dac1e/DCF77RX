@@ -57,7 +57,7 @@
 
 #else
   // Define own std::tm
-  using Dcf77time_t = uint64_t;
+  using Dcf77time_t = uint32_t;
 
   // See https://en.cppreference.com/w/cpp/chrono/c/tm
   struct Dcf77tm : public Printable {

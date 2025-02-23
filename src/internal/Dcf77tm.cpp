@@ -25,7 +25,23 @@
 #include <print.h>
 #include "Dcf77tm.h"
 
+#define DEBUG_TIMESTAMP_TO_TM false
+
 namespace {
+
+#if DEBUG_TIMESTAMP_TO_TM
+#include "Arduino.h"
+template<typename T> void print_variable(const T& v, const char* const varname) {
+  Serial.print(varname);
+  Serial.print('=');
+  Serial.println(v);
+}
+
+#define STRINGIFY(s) #s
+#define PRINT_VARIABLE(x) print_variable(x, STRINGIFY(x))
+#else
+#define PRINT_VARIABLE(x)
+#endif
 
 /* Move epoch from 01.01.1970 to 01.03.0000 (yes, Year 0) - this is the first
  * day of a 400-year long "era", right after additional day of leap year.
@@ -51,7 +67,7 @@ constexpr int YEARS_PER_ERA = 400;
 
 constexpr int DAYSPERWEEK = 7;
 constexpr int SECSPERMIN = 60;
-constexpr int SECSPERHOUR = SECSPERMIN * 60;
+constexpr int32_t SECSPERHOUR = SECSPERMIN * 60;
 constexpr int32_t SECSPERDAY = SECSPERHOUR * 24;
 
 const int month_yday[2][12] = {
@@ -139,35 +155,51 @@ Dcf77time_t Dcf77tm::toTimeStamp() const {
 
 void Dcf77tm::set(const Dcf77time_t timestamp, const uint8_t isdst)
 {
+  PRINT_VARIABLE(timestamp);
   long days = timestamp / SECSPERDAY + EPOCH_ADJUSTMENT_DAYS;
+  PRINT_VARIABLE(days);
   long remain = timestamp % SECSPERDAY;
+  PRINT_VARIABLE(remain);
   if (remain < 0) {
     remain += SECSPERDAY;
     --days;
   }
+  PRINT_VARIABLE(remain);
 
   /* compute day of week */
   tm_wday = ((((ADJUSTED_EPOCH_WDAY + DAYSPERWEEK) + days) % DAYSPERWEEK));
+  PRINT_VARIABLE(tm_wday);
 
   /* compute hour, min, and sec */
   tm_hour = (remain / SECSPERHOUR);
   remain %= SECSPERHOUR;
+  PRINT_VARIABLE(remain);
   tm_min = (remain / SECSPERMIN);
   tm_sec = (remain % SECSPERMIN);
 
   /* compute year, month, day & day of year. For description of this algorithm see
    * http://howardhinnant.github.io/date_algorithms.html#civil_from_days */
   const int era = (days >= 0 ? days : days - (DAYS_PER_ERA - 1)) / DAYS_PER_ERA;
+  PRINT_VARIABLE(era);
   const unsigned long eraday = days - era * DAYS_PER_ERA; /* [0, 146096] */
+  PRINT_VARIABLE(eraday);
   const unsigned erayear = (eraday - eraday / (DAYS_PER_4_YEARS - 1) + eraday / DAYS_PER_CENTURY -
       eraday / (DAYS_PER_ERA - 1)) / 365;         /* [0, 399] */
+  PRINT_VARIABLE(erayear);
   const unsigned yearday = eraday - (DAYS_PER_YEAR * erayear + erayear / 4 - erayear / 100); /* [0, 365] */
+  PRINT_VARIABLE(yearday);
   const unsigned m = (5 * yearday + 2) / 153;     /* [0, 11] */
+  PRINT_VARIABLE(m);
   const unsigned month = m < 10 ? m + 2 : m - 10;
+  PRINT_VARIABLE(month);
 
   tm_mday = yearday - (153 * m + 2) / 5 + 1;  /* [1, 31] */
+  PRINT_VARIABLE(tm_mday);
   tm_mon = month;
+  PRINT_VARIABLE(tm_mon);
   tm_year = ADJUSTED_EPOCH_YEAR - TM_YEAR_BASE + erayear + era * YEARS_PER_ERA + (month <= 1);
+  PRINT_VARIABLE(tm_year);
   tm_isdst = isdst;
+  PRINT_VARIABLE(tm_isdst);
 }
 
