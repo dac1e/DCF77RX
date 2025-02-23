@@ -32,46 +32,50 @@
 namespace Dcf77util {
 
 template<typename T, size_t SIZE> class Fifo {
+
+  static constexpr size_t ENTRIES = SIZE + 1;
 	typedef T element_type;
-	element_type mArray[SIZE];
+	element_type mArray[ENTRIES];
 	volatile size_t writeIndex = 0;
 	volatile size_t readIndex = 0;
 
 	inline size_t indexDifference() {
-		return (writeIndex - readIndex) % SIZE;
+		return (writeIndex - readIndex) % ENTRIES;
 	}
 
 public:
 	/**
-	 * Push a value to the fifo. Value is dropped,  when
+	 * Push a value to the Fifo. Value is dropped,  when
 	 * the fifo is full.
 	 *
-	 * @param[in] value The value to be pushed to the fifo.
+	 * @param[in] value The value to be pushed to the Fifo.
 	 *
-	 * @return true, if successful. false if the value
-	 *   couldn't be pushed due to an overflow.
+	 * @return the number of free entries in the Fifo BEFORE
+	 *  the element was pushed.
 	 */
-	bool push(const element_type &value) {
-		if (indexDifference() < (SIZE - 1)) {
-			writeIndex = (writeIndex + 1) % SIZE;
+	size_t push(const element_type &value) {
+	  const size_t freeEntries = SIZE - indexDifference() ;
+	  if (freeEntries > 0) {
+			writeIndex = (writeIndex + 1) % ENTRIES;
 			mArray[writeIndex] = value;
-			return true;
 		}
-		return false;
+		return freeEntries;
 	}
 
 	/**
-	 * Pop a value from the fifo.
-	 * @param[out] value The value that was popped from
-	 * 	the fifo.
+	 * Pop an element from the Fifo.
+	 * @param[out] value The value of the element that was
+	 *  popped from the Fifo.
 	 *
-	 * @return false when fifo is empty. Otherwise true.
+	 * @return number of elements in the Fifo BEFORE the
+	 *  element was popped.
+	 *  .
 	 */
-	bool pop(element_type &value) {
-		const bool returnValue = indexDifference() > 0;
+	size_t pop(element_type &value) {
+		const size_t returnValue = indexDifference();
 		if (returnValue) {
 			const size_t i = readIndex;
-			readIndex = (readIndex + 1) % SIZE;
+			readIndex = (readIndex + 1) % ENTRIES;
 			value = mArray[i];
 		}
 		return returnValue;

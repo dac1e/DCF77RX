@@ -28,7 +28,6 @@
 #define DCF77_INTERNAL_DCF77_BASE_HPP_
 
 #include <stdint.h>
-#include "Arduino.h"
 #include "Dcf77Fifo.h"
 #include "Dcf77tm.h"
 
@@ -36,13 +35,14 @@
 namespace Dcf77util {
 
 class Dcf77Base {
-	struct Dcf77pulse {uint32_t mLength = 0; int mLevel = 1;};
 
   uint32_t mPreviousFallingEdgeTime = 0;
   int mPreviousDcfSignalState = 1;
   size_t mRxCurrentBitBufferPosition = 0;
   uint64_t mRxBitBuffer = 0;
+
 protected:
+	struct Dcf77pulse {uint32_t mLength = 0; int mLevel = 1;};
 	static void dcf77frame2time(Dcf77tm &time, const uint64_t& dcf77frame);
 	void begin(int pin, void (*intHandler)());
 
@@ -52,8 +52,9 @@ protected:
 	void appendReceivedBit(const unsigned int signalBit);
 	bool concludeReceivedBits(uint64_t& dcf77frame);
 
-	virtual bool popPulse(Dcf77pulse &pulse) = 0;
-	virtual bool pushPulse(const Dcf77pulse &pulse) = 0;
+	virtual size_t popPulse(Dcf77pulse &pulse) = 0;
+	virtual size_t pushPulse(const Dcf77pulse &pulse) = 0;
+
 public:
 	void onPinInterrupt(int pin);
 };

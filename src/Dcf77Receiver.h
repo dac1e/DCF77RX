@@ -28,8 +28,8 @@
 #define DCF77_RECEIVER_HPP_
 
 #include <stdint.h>
-#include <Arduino.h>
 #include "internal/Dcf77base.h"
+#include <Arduino.h>
 
 /**
  * Dcf77Receiver is the main API class. It receives dcf77 pulses on a digital pin.
@@ -38,9 +38,9 @@
  * Usage:
  *
  * static constexpr size_t FIFO_SIZE = 6; // FIFO_SIZE is an optional parameter.
- * static constexpr int PIN = 3;
+ * static constexpr int DCF77_PIN = 3;
  *
- * class MyDcf77Receiver : public Dcf77Receiver<PIN, FIFO_SIZE> {
+ * class MyDcf77Receiver : public Dcf77Receiver<DCF77_PIN, FIFO_SIZE> {
  *   void onDcf77FrameReceived(const uint64_t dcf77frame) override {
  *     // convert bit to time structure.
  *     Dcf77tm time;
@@ -85,9 +85,9 @@
  * You can detect overflows by overwriting the function pushPulse in your
  * derived class and evaluate the result:
  *
- * class MyDcf77Receiver : public Dcf77Receiver<PIN, FIFO_SIZE> {
+ * class MyDcf77Receiver : public Dcf77Receiver<DCF77_PIN, FIFO_SIZE> {
  *   ...
- *   using baseClass = Dcf77Receiver<PIN, FIFO_SIZE>;
+ *   using baseClass = Dcf77Receiver<DCF77_PIN, FIFO_SIZE>;
  *   bool pushPulse(const Dcf77pulse &pulse) override {
  *     const bool ok = baseClass::pushPulse(pulse);
  *     if(not ok) {
@@ -100,6 +100,7 @@
  */
 template<int RECEIVER_PIN, size_t PULSE_FIFO_SIZE = 6>
 class Dcf77Receiver : public Dcf77util::Dcf77Base {
+
 public:
 
 	Dcf77Receiver() {
@@ -141,34 +142,37 @@ protected:
 	typedef Dcf77util::Fifo<Dcf77pulse, PULSE_FIFO_SIZE> PulseFifo;
 	PulseFifo mPulseFifo;
 
-private:
 	/* The instance that is responsible for pin RECEIVE_PIN. */
 	static Dcf77Base* mInstance;
 
 	/**
-	 * Push a received pulse to the fifo. That function
+	 * Push a received pulse to the Fifo. That function
 	 * will be called by the interrupt handler when a
 	 * pulse has been received.
 	 *
-   * @return true, if successful. false if the value
-   *   couldn't be pushed due to an overflow.
+   * @return the number of free places in the fifo BEFORE
+   *  the element was pushed.
 	 */
-	bool pushPulse(const Dcf77pulse &pulse) override {
+	size_t pushPulse(const Dcf77pulse &pulse) override {
 		return mPulseFifo.push(pulse);
 	}
 
 	/**
-	 * Pop a received pulse from the fifo. That function will be called
+	 * Pop a received pulse from the Fifo. That function will be called
 	 * by the processReceivedBits() in order to evaluate pulses that
 	 * have been received.
+	 *
+   * @return number of elements in the fifo BEFORE the
+   *  element was popped.
 	 */
-	bool popPulse(Dcf77pulse &pulse) override {
+	size_t popPulse(Dcf77pulse &pulse) override {
 		noInterrupts();
-		const bool result = mPulseFifo.pop(pulse);
+		const size_t result = mPulseFifo.pop(pulse);
 		interrupts();
 		return result;
 	}
 
+private:
 	/**
 	 * The interrupt handler that is called upon a level change on
 	 * the RECEIVER_PIN.

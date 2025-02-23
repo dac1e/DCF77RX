@@ -29,7 +29,7 @@
 
 #include "Dcf77Receiver.h"
 
-#define PRINT_DCF77FRAME_EVENT true
+#define PRINT_DCF77FRAME_EVENT false
 
 // Increase FIFO_SIZE if overflows happen. Overflow may happen, when
 // processReceivedBits() isn't called frequently enough in loop().
@@ -90,13 +90,16 @@ private:
 
 #if DETECT_FIFO_OVERFLOW
   using baseClass = Dcf77Receiver<DCF77_PIN, FIFO_SIZE>;
-  bool pushPulse(const Dcf77pulse &pulse) override {
-   Serial.println()
-   const bool ok = baseClass::pushPulse(pulse);
-   if(not ok) {
-     Serial.print("overflow");
+  size_t pushPulse(const Dcf77pulse &pulse) override {
+   const size_t fifoSpace = baseClass::pushPulse(pulse);
+   if(not fifoSpace) {
+     Serial.println("fifo overflow, level=");
+     Serial.println(FIFO_SIZE);
+   } else {
+     Serial.print("fifo level=");
+     Serial.println(FIFO_SIZE - fifoSpace + 1);
    }
-   return ok;
+   return fifoSpace;
   }
 #endif
 };
