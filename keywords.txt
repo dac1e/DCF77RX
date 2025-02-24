@@ -8,6 +8,7 @@
 
 Dcf77Receiver	KEYWORD1
 Dcf77tm			KEYWORD1
+Dcf77time_t     KEYWORD1
 
 #######################################
 # Methods and Functions (KEYWORD2)
@@ -17,3 +18,4 @@ begin					KEYWORD2
 dcf77frame2time			KEYWORD2
 onDcf77FrameReceived	KEYWORD2
 processReceivedBits		KEYWORD2
+toTimeStamp				KEYWORD2
