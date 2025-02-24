@@ -153,7 +153,7 @@ Dcf77time_t Dcf77tm::toTimeStamp() const {
   return result;
 }
 
-void Dcf77tm::set(const Dcf77time_t timestamp, const uint8_t isdst)
+void Dcf77tm::set(const Dcf77time_t timestamp, const int isdst)
 {
   PRINT_VARIABLE(timestamp);
   long days = timestamp / SECSPERDAY + EPOCH_ADJUSTMENT_DAYS;
@@ -175,7 +175,9 @@ void Dcf77tm::set(const Dcf77time_t timestamp, const uint8_t isdst)
   remain %= SECSPERHOUR;
   PRINT_VARIABLE(remain);
   tm_min = (remain / SECSPERMIN);
+  PRINT_VARIABLE(tm_min);
   tm_sec = (remain % SECSPERMIN);
+  PRINT_VARIABLE(tm_sec);
 
   /* compute year, month, day & day of year. For description of this algorithm see
    * http://howardhinnant.github.io/date_algorithms.html#civil_from_days */

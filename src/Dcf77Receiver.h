@@ -76,7 +76,7 @@
  * The time structure is of type std::tm in case the platform supports it.
  * Otherwise it is a proprietary structure with the same fields as std::tm.
  *
- * Note: The fifo approach was taken to keep the interrupt handler runtime as
+ * Note: The Fifo approach was taken to keep the interrupt handler runtime as
  *   short as possible. This is important to not delay servicing other
  *   pending interrupts.
  *
@@ -131,7 +131,7 @@ public:
 	/**
 	 * This function needs to be called frequently in the loop(). It
 	 * will pick up the received pulses that the interrupt
-	 * handler has stored in a fifo. If a complete dcf77 frame has
+	 * handler has stored in a Fifo. If a complete dcf77 frame has
 	 * been received, the function onDcf77FrameReceived() will be called.
 	 */
   inline void processReceivedBits() {

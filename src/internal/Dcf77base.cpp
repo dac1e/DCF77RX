@@ -96,10 +96,6 @@ void Dcf77Base::dcf77frame2time(Dcf77tm &time, const uint64_t& dcf77frame) {
 	time.tm_isdst = bits.Z1;
 }
 
-/**
- * Evaluates the information stored in the buffer. This is where the DCF77
- * signal is decoded and the internal clock is updated.
- */
 bool Dcf77Base::concludeReceivedBits(uint64_t& dcf77frame) {
   bool successfullUpdate = mRxCurrentBitBufferPosition == 59;
   dcf77frame = mRxBitBuffer;
@@ -117,11 +113,6 @@ bool Dcf77Base::concludeReceivedBits(uint64_t& dcf77frame) {
 	return successfullUpdate;
 }
 
-/**
- * Append a signal to the dcf_rx_buffer. Argument can be 1 or 0. An internal
- * counter shifts the writing position within the buffer. If position > 59,
- * a new minute begins -> time to call finalizeBuffer().
- */
 inline void Dcf77Base::appendReceivedBit(const unsigned int signalBit) {
 	if (mRxCurrentBitBufferPosition < 59) {
 		mRxBitBuffer = mRxBitBuffer | static_cast<unsigned long long>(signalBit) << mRxCurrentBitBufferPosition;
@@ -131,7 +122,7 @@ inline void Dcf77Base::appendReceivedBit(const unsigned int signalBit) {
 			flags.parity_flag = 0;
 		}
 
-		// save the parity when the corresponding segment ends
+		// Save the parity when the corresponding segment ends
 		if (mRxCurrentBitBufferPosition == 28) {
 			flags.parity_min = flags.parity_flag;
 		};

@@ -53,15 +53,15 @@ class MyDcf77Receiver : public Dcf77Receiver<DCF77_PIN, FIFO_SIZE> {
 #if DETECT_FIFO_OVERFLOW
   using baseClass = Dcf77Receiver<DCF77_PIN, FIFO_SIZE>;
   size_t pushPulse(const Dcf77pulse &pulse) override {
-   const size_t fifoSpace = baseClass::pushPulse(pulse);
-   if(not fifoSpace) {
-     Serial.println("fifo overflow, level=");
+   const size_t fifoSpaceBeforePush = baseClass::pushPulse(pulse);
+   if(not fifoSpaceBeforePush) {
+     Serial.println("Fifo overflow, level=");
      Serial.println(FIFO_SIZE);
    } else {
-     Serial.print("fifo level=");
-     Serial.println(FIFO_SIZE - fifoSpace + 1);
+     Serial.print("Fifo level=");
+     Serial.println(FIFO_SIZE - fifoSpaceBeforePush + 1);
    }
-   return fifoSpace;
+   return fifoSpaceBeforePush;
   }
 #endif
 };

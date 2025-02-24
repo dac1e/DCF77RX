@@ -36,37 +36,24 @@
 #endif
 
 #if HAS_STD_CTIME
-  // Use std::tm
+  /** Use std::tm and std::time_t */
   #include <ctime>
 
+  // See  https://en.cppreference.com/w/cpp/chrono/c/time_t
   using Dcf77time_t = std::time_t;
 
   // See https://en.cppreference.com/w/cpp/chrono/c/tm
   struct Dcf77tm : public std::tm, public Printable {
-    static constexpr int TM_YEAR_BASE = 1900;
 
-    int year() const {return tm_year + TM_YEAR_BASE;}
-
-    Dcf77time_t toTimeStamp() const;
-    void set(const std::time_t timestamp, const uint8_t isdst);
-
-  private:
-    size_t printTo(Print& p) const override;
-  };
 
 #else
-  // Define own std::tm
+  /** Define own tm and time_t */
+
+  // See https://en.cppreference.com/w/cpp/chrono/c/time_t
   using Dcf77time_t = uint32_t;
 
   // See https://en.cppreference.com/w/cpp/chrono/c/tm
   struct Dcf77tm : public Printable {
-    static constexpr int TM_YEAR_BASE = 1900;
-
-    int year() const {return tm_year + TM_YEAR_BASE;}
-
-    Dcf77time_t toTimeStamp() const;
-    void set(const Dcf77time_t timestamp, const uint8_t isdst);
-
     int tm_sec;
     int tm_min;
     int tm_hour;
@@ -75,12 +62,57 @@
     int tm_year;  // years since 1900
     int tm_wday;
     int tm_yday;
-    int tm_isdst;
+    int tm_isdst; // daylight savings active = 1
+
+#endif /* HAS_STD_CTIME */
+
+    /**
+     * TM_YEAR_BASE is the offset between the Anno Domini
+     * year and tm_year field in the tm structure.
+     */
+   static constexpr int TM_YEAR_BASE = 1900;
+
+    /**
+     * @return the Anno Domini year from the tm_year field
+     *  of this structure.
+     */
+    int year() const {return tm_year + TM_YEAR_BASE;}
+
+    /**
+     * Convert the tm structure to a time_t timestamp
+     *
+     * @return Expired seconds since 1 Jan 0:00:00  1970
+     */
+    Dcf77time_t toTimeStamp() const;
+
+    /**
+     * Set this tm structure from a time_t timestamp and
+     * daylight savings flag.
+     */
+    void set(const Dcf77time_t timestamp, const int isdst);
 
   private:
+    /**
+     * Implementation of the Printable interface, which
+     * allows to print this tm structure.
+     *
+     * @return The number of printed characters.
+     *
+     * Example:
+     *   Dcf77tm tm;
+     *
+     *   tm.tm_hour = 15;
+     *   tm.tm_min = 10;
+     *   tm.tm_sec = 30;
+     *   tm.tm_mday = 23;
+     *   tm.tm_mon = 1;
+     *   tm.tm_year = 2025 - Dcf77tm::TM_YEAR_BASE;
+     *   tm.tm_isdst = 0;
+     *
+     *   Serial.println(tm);
+     */
     size_t printTo(Print& p) const override;
   };
 
-#endif /* HAS_STD_CTIME */
 
 #endif /* DCF77QINT_INTERNAL_DCF77TM_H_ */
