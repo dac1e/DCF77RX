@@ -47,7 +47,7 @@ static constexpr unsigned MSEC_PER_MINUTE = 60000;
  * The clock needs an initial Dcf77 frame to start. Seconds
  * since the last received Dcf77 are calculated via systick
  * from function millis() and used to keep the clock running.
- * The clock need a Dcf77 frame update at least every
+ * The clock needs a Dcf77 frame update at least every
  * 2**32 milliseconds, which is approximately every 49 days.
  * Otherwise there will be a systick overrun and the clock
  * will provide wrong results.
@@ -76,7 +76,6 @@ public:
    */
   bool getTime(Dcf77tm& tm, unsigned* millisec) {
     if(mIsdst >= 0) {
-      // Disable interrupts to avoid race condition.
       const uint32_t millisSinceLastFrame = millis() - mSystickAtLastFrame;
       const uint32_t secSinceLastFrame = millisSinceLastFrame / 1000;
       tm.set(mLastDcf77timestamp + secSinceLastFrame, mIsdst);
