@@ -1,5 +1,5 @@
 # Dcf77Receiver
-Receive  Dcf77 frames and convert to std::tm structure
+Receive Dcf77 frames and convert to them to std::tm structure. Dcf77clock example provided.
 
 The library has been tested along with 'ELV DCF-Empfangsmodul DCF-2' in combination with 'ELV Bausatz Externe DCF-Antenne DCF-ET1' on:
 
