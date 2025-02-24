@@ -30,6 +30,7 @@
 #include <stdint.h>
 #include "Dcf77Fifo.h"
 #include "Dcf77tm.h"
+#include "ISR_ATTR.h"
 
 
 namespace Dcf77util {
@@ -97,6 +98,7 @@ protected:
 	 * To be overridden by the derived class, to store a pulse
 	 * in the Fifo. Called by onPinInterrupt().
 	 */
+	TEXT_ISR_ATTR_2
 	virtual size_t pushPulse(const Dcf77pulse &pulse) = 0;
 
 	/**
@@ -112,6 +114,7 @@ public:
    *
    * @param[in] the pin for which the interrupt was triggered.
    */
+	TEXT_ISR_ATTR_1
 	void onPinInterrupt(int pin);
 };
 

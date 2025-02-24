@@ -28,6 +28,7 @@
 #define DCF77_INTERNAL_UTIL_FIFO_HPP_
 
 #include <stddef.h>
+#include "internal/ISR_ATTR.h"
 
 namespace Dcf77util {
 
@@ -39,7 +40,7 @@ template<typename T, size_t SIZE> class Fifo {
 	volatile size_t writeIndex = 0;
 	volatile size_t readIndex = 0;
 
-	inline size_t indexDifference() {
+	TEXT_ISR_ATTR_3 inline size_t indexDifference() {
 		return (writeIndex - readIndex) % ENTRIES;
 	}
 
@@ -53,6 +54,7 @@ public:
 	 * @return the number of free entries in the Fifo BEFORE
 	 *  the element was pushed.
 	 */
+	TEXT_ISR_ATTR_3
 	size_t push(const element_type &value) {
 	  const size_t freeEntries = SIZE - indexDifference() ;
 	  if (freeEntries > 0) {

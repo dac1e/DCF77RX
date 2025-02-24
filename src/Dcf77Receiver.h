@@ -28,6 +28,7 @@
 #define DCF77_RECEIVER_HPP_
 
 #include <stdint.h>
+#include "internal/ISR_ATTR.h"
 #include "internal/Dcf77base.h"
 #include <Arduino.h>
 
@@ -153,6 +154,7 @@ protected:
    * @return the number of free places in the fifo BEFORE
    *  the element was pushed.
 	 */
+	TEXT_ISR_ATTR_2
 	size_t pushPulse(const Dcf77pulse &pulse) override {
 		return mPulseFifo.push(pulse);
 	}
@@ -177,6 +179,7 @@ private:
 	 * The interrupt handler that is called upon a level change on
 	 * the RECEIVER_PIN.
 	 */
+	TEXT_ISR_ATTR_0
 	static void intHandler() {
 		mInstance->onPinInterrupt(RECEIVER_PIN);
 	}
