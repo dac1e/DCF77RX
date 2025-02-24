@@ -37,6 +37,12 @@
 static constexpr size_t FIFO_SIZE = 6;
 static constexpr int DCF77_PIN = 2;
 
+// Create alarm, if there are no frames received for longer than this time.
+// Unit is minutes.
+static constexpr unsigned DCF77_FRAME_MISSING_ALARM_TIMEOUT = 3;
+static constexpr int ALARM_LED = LED_BUILTIN;
+static constexpr unsigned MSEC_PER_MINUTE = 60000;
+
 /**
  * The clock needs an initial Dcf77 frame to start. Seconds
  * since the last received Dcf77 are calculated via systick
@@ -47,12 +53,17 @@ static constexpr int DCF77_PIN = 2;
  * will provide wrong results.
  */
 class Dcf77clock : public Dcf77Receiver<DCF77_PIN, FIFO_SIZE> {
-  Dcf77time_t mLastDcf77timestamp;
-  uint32_t mSystickAtLastFrame;
-  int mIsdst;
+  using baseClass = Dcf77Receiver<DCF77_PIN, FIFO_SIZE>;
 
 public:
-  Dcf77clock() : mLastDcf77timestamp(0), mIsdst(-1), mSystickAtLastFrame(0) {}
+  Dcf77clock()
+    : mLastDcf77timestamp(0), mIsdst(-1), mSystickAtLastFrame(0), mAlarm(false) {
+  }
+
+  void begin() {
+    pinMode(ALARM_LED, OUTPUT);
+    baseClass::begin();
+  }
 
   /**
    * Read the current time.
@@ -60,6 +71,7 @@ public:
    * @param[out] tm. The actual time.
    * @param[out] millisec The number of expired milliseconds
    *  within the current second.
+   *
    * @return false, as long as no Dcf77 frame was received.
    */
   bool getTime(Dcf77tm& tm, unsigned* millisec) {
@@ -75,6 +87,18 @@ public:
     }
     return false;
   }
+
+  bool checkAlarm() {
+    if(!mAlarm) {
+      const uint32_t millisSinceLastFrame =  millis() - mSystickAtLastFrame;
+      if(millisSinceLastFrame >=
+          static_cast<uint32_t>(DCF77_FRAME_MISSING_ALARM_TIMEOUT) * MSEC_PER_MINUTE) {
+        raiseAlarm();
+      }
+    }
+    return mAlarm;
+  }
+
 private:
   void onDcf77FrameReceived(const uint64_t dcf77frame) override {
     mSystickAtLastFrame = millis();
@@ -86,10 +110,31 @@ private:
     Serial.print("Dcf77 frame received: ");
     Serial.println(tm);
 #endif
+    resetAlarm();
   }
 
+  void raiseAlarm() {
+    if(!mAlarm) {
+      Serial.println("Alarm: Dcf77 connection lost.");
+      digitalWrite(ALARM_LED, HIGH);
+      mAlarm = true;
+    }
+  }
+
+  void resetAlarm() {
+    if(mAlarm) {
+      Serial.println("Alarm: Dcf77 connection recovered.");
+      digitalWrite(ALARM_LED, LOW);
+      mAlarm = false;
+    }
+  }
+
+  Dcf77time_t mLastDcf77timestamp;
+  uint32_t mSystickAtLastFrame;
+  int mIsdst;
+  bool mAlarm;
+
 #if DETECT_FIFO_OVERFLOW
-  using baseClass = Dcf77Receiver<DCF77_PIN, FIFO_SIZE>;
   size_t pushPulse(const Dcf77pulse &pulse) override {
    const size_t fifoSpaceBeforePush = baseClass::pushPulse(pulse);
    if(not fifoSpaceBeforePush) {
@@ -117,7 +162,6 @@ void setup()
   Serial.println("---------- Dcf77clock -----------");
   Serial.println("First frame may take some minutes");
   dcf77Clock.begin();
-
   lastSystick = millis() - PRINTOUT_PERIOD * 1000;
 }
 
@@ -126,6 +170,7 @@ void loop()
 {
   // Frequently process received bits.
   dcf77Clock.processReceivedBits();
+  dcf77Clock.checkAlarm();
 
   const uint32_t systick = millis();
   if(systick - lastSystick >= PRINTOUT_PERIOD * 1000) {
