@@ -40,7 +40,8 @@ template<typename T, size_t SIZE> class Fifo {
 	volatile size_t writeIndex = 0;
 	volatile size_t readIndex = 0;
 
-	TEXT_ISR_ATTR_3 inline size_t indexDifference() {
+	TEXT_ISR_ATTR_3_INLINE
+	size_t indexDifference() {
 		return (writeIndex - readIndex) % ENTRIES;
 	}
 
@@ -54,7 +55,7 @@ public:
 	 * @return the number of free entries in the Fifo BEFORE
 	 *  the element was pushed.
 	 */
-	TEXT_ISR_ATTR_3
+	TEXT_ISR_ATTR_3_INLINE
 	size_t push(const element_type &value) {
 	  const size_t freeEntries = SIZE - indexDifference() ;
 	  if (freeEntries > 0) {
@@ -73,7 +74,7 @@ public:
 	 *  element was popped.
 	 *  .
 	 */
-	size_t pop(element_type &value) {
+	inline size_t pop(element_type &value) {
 		const size_t returnValue = indexDifference();
 		if (returnValue) {
 			const size_t i = readIndex;

@@ -51,12 +51,13 @@
 #endif
 
 #define TEXT_ISR_ATTR_0			TEXT_ISR_ATTR // level 0, attibute for handleInterrupt()
-#define TEXT_ISR_ATTR_1			TEXT_ISR_ATTR // level 1, attibute functions called by handleInterrupt()
-#define TEXT_ISR_ATTR_2			TEXT_ISR_ATTR // level 2, attibute functions called by functions called by handleInterrupt()
-#define TEXT_ISR_ATTR_3     TEXT_ISR_ATTR // level 3, attibute functions called by functions called by handleInterrupt()
+#define TEXT_ISR_ATTR_1			TEXT_ISR_ATTR // level 1, attibute functions
+#define TEXT_ISR_ATTR_2			TEXT_ISR_ATTR // level 2, attibute functions
+#define TEXT_ISR_ATTR_3     TEXT_ISR_ATTR // level 3, attibute functions
 
 #define TEXT_ISR_ATTR_0_INLINE	TEXT_ISR_ATTR_INLINE // level 0, IRAM_ATTR or ICACHE_RAM_ATTR on ESP. Otherwise 'inline'
 #define TEXT_ISR_ATTR_1_INLINE	TEXT_ISR_ATTR_INLINE // level 1, IRAM_ATTR or ICACHE_RAM_ATTR on ESP. Otherwise 'inline'
 #define TEXT_ISR_ATTR_2_INLINE	TEXT_ISR_ATTR_INLINE // level 2, IRAM_ATTR or ICACHE_RAM_ATTR on ESP. Otherwise 'inline'
+#define TEXT_ISR_ATTR_3_INLINE  TEXT_ISR_ATTR_INLINE // level 2, IRAM_ATTR or ICACHE_RAM_ATTR on ESP. Otherwise 'inline'
 
 #endif /* DCF77_ISR_ATTR_INTERNAL_HPP_ */
