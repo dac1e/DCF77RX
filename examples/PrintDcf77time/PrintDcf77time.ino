@@ -29,13 +29,19 @@
 
 #include "Dcf77Receiver.h"
 
+//
+// Note: The Fifo approach was taken to keep the interrupt handler
+//    runtime as short as possible. This is important to not delay
+//    servicing other pending interrupts. Set this macro to true
+//    to observe the Fifo load.
+#define OBSERVE_FIFO_LOAD false
+//
 // Increase FIFO_SIZE if overflows happen. Overflow may happen, when
 // processReceivedBits() isn't called frequently enough in loop().
-#define DETECT_FIFO_OVERFLOW false
 static constexpr size_t FIFO_SIZE = 6;
 static constexpr int DCF77_PIN = 2;
 
-static constexpr size_t PRINTOUT_PERIOD = 3;
+static constexpr size_t PRINTOUT_PERIOD = 1;
 static uint32_t counter = 0;
 static uint32_t lastSystick = 0;
 
@@ -50,19 +56,9 @@ class MyDcf77Receiver : public Dcf77Receiver<DCF77_PIN, FIFO_SIZE> {
     Serial.println(time);
   }
 
-#if DETECT_FIFO_OVERFLOW
+#if OBSERVE_FIFO_LOAD
   using baseClass = Dcf77Receiver<DCF77_PIN, FIFO_SIZE>;
-  size_t pushPulse(const Dcf77pulse &pulse) override {
-   const size_t fifoSpaceBeforePush = baseClass::pushPulse(pulse);
-   if(not fifoSpaceBeforePush) {
-     Serial.println("Fifo overflow, level=");
-     Serial.println(FIFO_SIZE);
-   } else {
-     Serial.print("Fifo level=");
-     Serial.println(FIFO_SIZE - fifoSpaceBeforePush + 1);
-   }
-   return fifoSpaceBeforePush;
-  }
+  size_t pushPulse(const Dcf77pulse &pulse) override;
 #endif
 };
 
@@ -95,3 +91,17 @@ void loop()
     lastSystick = systick;
   }
 }
+
+#if OBSERVE_FIFO_LOAD
+size_t MyDcf77Receiver::pushPulse(const Dcf77pulse &pulse) {
+ const size_t fifoSpaceBeforePush = baseClass::pushPulse(pulse);
+ if(not fifoSpaceBeforePush) {
+   Serial.println("Fifo overflow, level=");
+   Serial.println(FIFO_SIZE);
+ } else {
+   Serial.print("Fifo level=");
+   Serial.println(FIFO_SIZE - fifoSpaceBeforePush + 1);
+ }
+ return fifoSpaceBeforePush;
+}
+#endif
