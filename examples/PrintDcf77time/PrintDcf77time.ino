@@ -96,10 +96,10 @@ void loop()
 size_t MyDcf77Receiver::pushPulse(const Dcf77pulse &pulse) {
  const size_t fifoSpaceBeforePush = baseClass::pushPulse(pulse);
  if(not fifoSpaceBeforePush) {
-   Serial.println("Fifo overflow, level=");
+   Serial.println("Fifo overflow, load=");
    Serial.println(FIFO_SIZE);
  } else {
-   Serial.print("Fifo level=");
+   Serial.print("Fifo load=");
    Serial.println(FIFO_SIZE - fifoSpaceBeforePush + 1);
  }
  return fifoSpaceBeforePush;
