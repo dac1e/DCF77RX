@@ -78,8 +78,8 @@ void Dcf77Base::onPinInterrupt(int pin) {
 	// check the value again - since it takes some time to activate
 	// the interrupt routine, we get a clear signal.
 	Dcf77pulse dcf77signal;
-	dcf77signal.mLevel = digitalRead(pin);
-	dcf77signal.mLength = millis();
+	dcf77signal.mPulseLevel = digitalRead(pin);
+	dcf77signal.mPulseLength = millis();
 	pushPulse(dcf77signal);
 }
 
@@ -147,26 +147,24 @@ inline void Dcf77Base::appendReceivedBit(const unsigned signalBit) {
 void Dcf77Base::processReceivedBits() {
 	Dcf77pulse dcf77signal;
 	while (popPulse(dcf77signal)) {
-		if (dcf77signal.mLevel == DCF_SIGNAL_STATE_LOW) {
-			if (mPreviousDcfSignalState != DCF_SIGNAL_STATE_LOW) {
+		if (dcf77signal.mPulseLevel == DCF_SIGNAL_STATE_LOW) {
+			if (mPreviousPulse.mPulseLevel != DCF_SIGNAL_STATE_LOW) {
 				/* falling edge */
-				if ((dcf77signal.mLength - mPreviousFallingEdgeTime) > DCF_SYNC_MILLIS) {
+				if ((dcf77signal.mPulseLength - mPreviousPulse.mPulseLength) > DCF_SYNC_MILLIS) {
 					uint64_t dcf77frame;
 					if(concludeReceivedBits(dcf77frame)) {
 						onDcf77FrameReceived(dcf77frame);
 					}
 				}
-
-				mPreviousDcfSignalState = dcf77signal.mLevel;
-				mPreviousFallingEdgeTime = dcf77signal.mLength;
+				mPreviousPulse = dcf77signal;
 			}
 		} else {
-			if (mPreviousDcfSignalState != DCF_SIGNAL_STATE_HIGH) {
+			if (mPreviousPulse.mPulseLevel != DCF_SIGNAL_STATE_HIGH) {
 				/* rising edge */
-				const uint32_t difference = dcf77signal.mLength - mPreviousFallingEdgeTime;
+				const uint32_t difference = dcf77signal.mPulseLength - mPreviousPulse.mPulseLength;
 				const unsigned bit = difference < DCF_SPLIT_MILLIS ? 0 : 1;
 				appendReceivedBit(bit);
-				mPreviousDcfSignalState = dcf77signal.mLevel;
+				mPreviousPulse.mPulseLevel = dcf77signal.mPulseLevel;
 			}
 		}
 	}
@@ -174,7 +172,7 @@ void Dcf77Base::processReceivedBits() {
 
 void Dcf77Base::begin(int pin, void (*intHandler)()) {
 	pinMode(pin, INPUT_PULLUP);
-	mPreviousDcfSignalState = digitalRead(pin);
+	mPreviousPulse.mPulseLevel = digitalRead(pin);
 	attachInterrupt(digitalPinToInterrupt(pin), intHandler, CHANGE);
 }
 

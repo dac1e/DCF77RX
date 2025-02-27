@@ -42,8 +42,17 @@ namespace Dcf77util {
  * the Fifo size as compile time template parameters.
  */
 class Dcf77Base {
+public:
+  /**
+   * To be called by the interrupt handler.
+   *
+   * @param[in] the pin for which the interrupt was triggered.
+   */
+  TEXT_ISR_ATTR_1
+  void onPinInterrupt(int pin);
+
 protected:
-	struct Dcf77pulse {uint32_t mLength = 0; int mLevel = 1;};
+	struct Dcf77pulse {uint32_t mPulseLength = 0; int mPulseLevel = 1;};
 
 	/**
 	 * Convert a received dcf77 frame to a tm structure.
@@ -101,22 +110,11 @@ protected:
 	 */
 	virtual size_t popPulse(Dcf77pulse &pulse) = 0;
 
-public:
-  /**
-   * To be called by the interrupt handler.
-   *
-   * @param[in] the pin for which the interrupt was triggered.
-   */
-	TEXT_ISR_ATTR_1
-	void onPinInterrupt(int pin);
-
 private:
   uint64_t mRxBitBuffer = 0;
   size_t mRxCurrentBitBufferPosition = 0;
 
-//  Dcf77pulse mPreviousPulse;
-  uint32_t mPreviousFallingEdgeTime = 0;
-  int mPreviousDcfSignalState = 1;
+  Dcf77pulse mPreviousPulse;
 };
 
 } // namespace Dcf77util
