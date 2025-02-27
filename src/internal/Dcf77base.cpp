@@ -46,22 +46,22 @@ constexpr int DCF_SIGNAL_STATE_HIGH = !DCF_SIGNAL_STATE_LOW;
  * DCF time format struct
  */
 struct DCF77bits {
-  unsigned long long prefix:15;
-  unsigned long long R			:1;
-  unsigned long long A1			:1;
-  unsigned long long Z1			:1; // Set to 1 when CEST is in effect
-  unsigned long long Z2			:1; // Set to 1 when CET  is in effect
-  unsigned long long A2			:1;
-  unsigned long long S			:1;
-  unsigned long long Min		:7;	// minutes
-  unsigned long long P1			:1;	// parity minutes
-  unsigned long long Hour		:6;	// hours
-  unsigned long long P2			:1;	// parity hours
-  unsigned long long Day		:6;	// day
-  unsigned long long Weekday:3;	// day of week
-  unsigned long long Month	:5;	// month
-  unsigned long long Year		:8;	// year (last 2 digits)
-  unsigned long long P3			:1;	// parity
+  uint64_t prefix:15;
+  uint64_t R			:1;
+  uint64_t A1			:1;
+  uint64_t Z1			:1; // Set to 1 when CEST is in effect
+  uint64_t Z2			:1; // Set to 1 when CET  is in effect
+  uint64_t A2			:1;
+  uint64_t S			:1;
+  uint64_t Min		:7;	// minutes
+  uint64_t P1			:1;	// parity minutes
+  uint64_t Hour		:6;	// hours
+  uint64_t P2			:1;	// parity hours
+  uint64_t Day		:6;	// day
+  uint64_t Weekday:3;	// day of week
+  uint64_t Month	:5;	// month
+  uint64_t Year		:8;	// year (last 2 digits)
+  uint64_t P3			:1;	// parity
 };
 
 struct {
@@ -113,9 +113,9 @@ bool Dcf77Base::concludeReceivedBits(uint64_t& dcf77frame) {
 	return successfullUpdate;
 }
 
-inline void Dcf77Base::appendReceivedBit(const unsigned int signalBit) {
+inline void Dcf77Base::appendReceivedBit(const unsigned signalBit) {
 	if (mRxCurrentBitBufferPosition < 59) {
-		mRxBitBuffer = mRxBitBuffer | static_cast<unsigned long long>(signalBit) << mRxCurrentBitBufferPosition;
+		mRxBitBuffer = mRxBitBuffer | static_cast<uint64_t>(signalBit) << mRxCurrentBitBufferPosition;
 
 		// Update the parity bits. First: Reset when minute, hour or date starts.
 		if (mRxCurrentBitBufferPosition == 21 || mRxCurrentBitBufferPosition == 29 || mRxCurrentBitBufferPosition == 36) {
@@ -146,25 +146,25 @@ inline void Dcf77Base::appendReceivedBit(const unsigned int signalBit) {
 
 void Dcf77Base::processReceivedBits() {
 	Dcf77pulse dcf77signal;
-	if (popPulse(dcf77signal)) {
+	while (popPulse(dcf77signal)) {
 		if (dcf77signal.mLevel == DCF_SIGNAL_STATE_LOW) {
-			const uint32_t edgeTime = dcf77signal.mLength;
 			if (mPreviousDcfSignalState != DCF_SIGNAL_STATE_LOW) {
 				/* falling edge */
-				if ((edgeTime - mPreviousFallingEdgeTime) > DCF_SYNC_MILLIS) {
+				if ((dcf77signal.mLength - mPreviousFallingEdgeTime) > DCF_SYNC_MILLIS) {
 					uint64_t dcf77frame;
 					if(concludeReceivedBits(dcf77frame)) {
 						onDcf77FrameReceived(dcf77frame);
 					}
 				}
+
 				mPreviousDcfSignalState = dcf77signal.mLevel;
-				mPreviousFallingEdgeTime = edgeTime;
+				mPreviousFallingEdgeTime = dcf77signal.mLength;
 			}
 		} else {
 			if (mPreviousDcfSignalState != DCF_SIGNAL_STATE_HIGH) {
 				/* rising edge */
 				const uint32_t difference = dcf77signal.mLength - mPreviousFallingEdgeTime;
-				const uint64_t bit = difference < DCF_SPLIT_MILLIS ? 0 : 1;
+				const unsigned bit = difference < DCF_SPLIT_MILLIS ? 0 : 1;
 				appendReceivedBit(bit);
 				mPreviousDcfSignalState = dcf77signal.mLevel;
 			}

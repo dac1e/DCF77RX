@@ -42,12 +42,6 @@ namespace Dcf77util {
  * the Fifo size as compile time template parameters.
  */
 class Dcf77Base {
-
-  uint32_t mPreviousFallingEdgeTime = 0;
-  int mPreviousDcfSignalState = 1;
-  size_t mRxCurrentBitBufferPosition = 0;
-  uint64_t mRxBitBuffer = 0;
-
 protected:
 	struct Dcf77pulse {uint32_t mLength = 0; int mLevel = 1;};
 
@@ -79,7 +73,7 @@ protected:
 	/**
 	 * Append a received bit to the rx buffer.
 	 */
-	void appendReceivedBit(const unsigned int signalBit);
+	void appendReceivedBit(const unsigned signalBit);
 
 	/**
 	 * Obtain a valid dcf77 frame.
@@ -108,7 +102,6 @@ protected:
 	virtual size_t popPulse(Dcf77pulse &pulse) = 0;
 
 public:
-
   /**
    * To be called by the interrupt handler.
    *
@@ -116,6 +109,14 @@ public:
    */
 	TEXT_ISR_ATTR_1
 	void onPinInterrupt(int pin);
+
+private:
+  uint64_t mRxBitBuffer = 0;
+  size_t mRxCurrentBitBufferPosition = 0;
+
+//  Dcf77pulse mPreviousPulse;
+  uint32_t mPreviousFallingEdgeTime = 0;
+  int mPreviousDcfSignalState = 1;
 };
 
 } // namespace Dcf77util
