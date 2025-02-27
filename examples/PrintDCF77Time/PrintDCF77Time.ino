@@ -1,5 +1,5 @@
 /*
-  Dcf77Receiver - Arduino libary receiving and decoding Dcf77 frames Copyright (c)
+  DCF77Receiver - Arduino libary receiving and decoding DCFf77 frames Copyright (c)
   2025 Wolfgang Schmieder.  All right reserved.
 
   Contributors:
@@ -23,11 +23,11 @@
 */
 
 /**
- * Receive frames from dcf77, convert them to Dcf77tm time structure and
+ * Receive frames from dcf77, convert them to DCF77tm time structure and
  * print them on Serial.
  */
 
-#include "Dcf77Receiver.h"
+#include "DCF77Receiver.h"
 
 static constexpr int DCF77_PIN = 2;
 
@@ -35,7 +35,7 @@ static constexpr size_t PRINTOUT_PERIOD = 1;
 static int32_t counter = 0;
 static uint32_t lastSystick = 0;
 
-class MyDcf77Receiver : public Dcf77Receiver<DCF77_PIN> {
+class MyDCF77Receiver : public DCF77Receiver<DCF77_PIN> {
   uint64_t mDcf77frame = 0;
 
   /**
@@ -43,13 +43,13 @@ class MyDcf77Receiver : public Dcf77Receiver<DCF77_PIN> {
    * quickly in order not to prevent other lower priority interrupts to
    * be serviced.
    */
-  void onDcf77FrameReceived(const uint64_t dcf77frame, const uint32_t systick) override {
+  void onDCF77FrameReceived(const uint64_t dcf77frame, const uint32_t systick) override {
     counter = -1;
     mDcf77frame = dcf77frame;
   }
 
 public:
-  uint64_t getDcf77frame() const {
+  uint64_t getDCF77frame() const {
     noInterrupts();
     const uint64_t result = mDcf77frame;
     interrupts();
@@ -57,13 +57,13 @@ public:
   }
 };
 
-MyDcf77Receiver myReceiver;
+MyDCF77Receiver myReceiver;
 
 //The setup function is called once at startup of the sketch
 void setup()
 {
   Serial.begin(9600);
-  Serial.println("-------- PrintDcf77time ---------");
+  Serial.println("-------- PrintDCF77Time ---------");
   Serial.println("First frame may take some minutes");
   myReceiver.begin();
   lastSystick = millis() - PRINTOUT_PERIOD * 1000;
@@ -76,12 +76,12 @@ void loop()
   if(systick - lastSystick >= PRINTOUT_PERIOD * 1000) {
     if(counter < 0) {
       // Frame received.
-      const uint64_t dcf77frame = myReceiver.getDcf77frame();
+      const uint64_t dcf77frame = myReceiver.getDCF77frame();
       if( dcf77frame ) {
         // convert frame to time structure.
-        Dcf77tm time;
+        DCF77tm time;
         myReceiver.dcf77frame2time(time, dcf77frame);
-        Serial.print("Dcf77 frame received: ");
+        Serial.print("DCF77 frame received: ");
         Serial.println(time);
       }
     } else {
@@ -89,7 +89,7 @@ void loop()
       Serial.print('[');
       Serial.print(counter);
       Serial.print("s]");
-      Serial.print(" Waiting for completion of Dcf77 frame on Arduino pin ");
+      Serial.print(" Waiting for completion of DCF77 frame on Arduino pin ");
       Serial.println(DCF77_PIN);
     }
 

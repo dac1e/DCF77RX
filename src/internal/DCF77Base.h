@@ -1,5 +1,5 @@
 /*
-  Dcf77Receiver - Arduino libary receiving and decoding Dcf77 frames Copyright (c)
+  DCF77Receiver- Arduino libary receiving and decoding Dcf77 frames Copyright (c)
   2025 Wolfgang Schmieder.  All right reserved.
 
   Contributors:
@@ -28,18 +28,15 @@
 #define DCF77_INTERNAL_DCF77_BASE_HPP_
 
 #include <stdint.h>
-#include "Dcf77tm.h"
+#include "DCF77tm.h"
 #include "ISR_ATTR.h"
-
-
-namespace Dcf77util {
 
 /**
  * This base class does the main work to receive and
  * decode Dcf77 frames. The derived template class
  * Dcf77Receiver provides only the PIN to be used.
  */
-class Dcf77Base {
+class DCF77Base {
 public:
   /**
    * To be called by the interrupt handler.
@@ -50,16 +47,16 @@ public:
   void onPinInterrupt(int pin);
 
   /**
-   * Convert a dcf77 frame to a time structure. Type Dcf77tm
+   * Convert a dcf77 frame to a time structure. Type DCF77tm
    * is of type to std::tm in case the platform supports it.
    *
    * @param[out] time The dcf77 bits as time structure.
    * @param[in] dcf77frame The dcf77 frame.
    */
-	static void dcf77frame2time(Dcf77tm &time, const uint64_t& dcf77frame);
+	static void dcf77frame2time(DCF77tm &time, const uint64_t& dcf77frame);
 
 protected:
-	struct Dcf77pulse {uint32_t mPulseTime = 0; int mPulseLevel = 1;};
+	struct DCF77pulse {uint32_t mPulseTime = 0; int mPulseLevel = 1;};
 
 	/**
 	 * Establish interrupt handler for pin.
@@ -67,7 +64,7 @@ protected:
 	void begin(int pin, void (*intHandler)());
 
 	TEXT_ISR_ATTR_2_INLINE
-	void processPulse(const Dcf77pulse &dcf77signal);
+	void processPulse(const DCF77pulse &dcf77signal);
 
 	/**
 	 * Append a received bit to the rx buffer.
@@ -97,15 +94,13 @@ protected:
 	 * interrupts to be serviced.
 	 */
 	TEXT_ISR_ATTR_4
-	virtual void onDcf77FrameReceived(const uint64_t dcf77frame,
+	virtual void onDCF77FrameReceived(const uint64_t dcf77frame,
 	    const uint32_t systick) = 0;
 
 private:
   uint64_t mRxBitBuffer = 0;
   size_t mRxBitBufPos = 0;
-  Dcf77pulse mPreviousPulse;
+  DCF77pulse mPreviousPulse;
 };
-
-} // namespace Dcf77util
 
 #endif /* DCF77_INTERNAL_DCF77_BASE_HPP_ */

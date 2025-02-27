@@ -1,5 +1,5 @@
 /*
-  Dcf77Receiver - Arduino libary receiving and decoding Dcf77 frames Copyright (c)
+  DCF77Receiver - Arduino libary receiving and decoding DCF77 frames Copyright (c)
   2025 Wolfgang Schmieder.  All right reserved.
 
   Contributors:
@@ -23,7 +23,7 @@
 */
 
 #include <print.h>
-#include "Dcf77tm.h"
+#include "DCF77tm.h"
 
 #define DEBUG_TIMESTAMP_TO_TM false
 
@@ -94,7 +94,7 @@ inline int leapYearsSince1970 (const int year) {
 /**
  * Calculate the expired days since 1st of January.
  */
-inline int yday(const Dcf77tm& tm) {
+inline int yday(const DCF77tm& tm) {
   const int leapYear = isLeapYear(tm.year());
   const int month = tm.tm_mon;
   const int yday_ = month_yday[leapYear][month];
@@ -106,7 +106,7 @@ inline int yday(const Dcf77tm& tm) {
 
 #if HAS_STD_CTIME
 
-size_t Dcf77tm::printTo(Print& p) const {
+size_t DCF77tm::printTo(Print& p) const {
   char buffer[26];
   asctime_r(this, buffer);
   buffer[24] = '\0'; // remove /n
@@ -118,7 +118,7 @@ size_t Dcf77tm::printTo(Print& p) const {
 static const char* MO[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
 static const char* WD[] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
 
-size_t Dcf77tm::printTo(Print& p) const {
+size_t DCF77tm::printTo(Print& p) const {
   size_t n = 0;
 
   n+= p.print(WD[tm_wday]); // day of week
@@ -144,8 +144,8 @@ size_t Dcf77tm::printTo(Print& p) const {
 
 #endif
 
-Dcf77time_t Dcf77tm::toTimeStamp() const {
-  using time_t = Dcf77time_t;
+DCF77time_t DCF77tm::toTimeStamp() const {
+  using time_t = DCF77time_t;
   const bool leapYear = isLeapYear(year());
   const time_t leapYearsBeforeThisYear = leapYearsSince1970(year()) - leapYear;
   const time_t yearOffset = year() - 1970;
@@ -153,7 +153,7 @@ Dcf77time_t Dcf77tm::toTimeStamp() const {
   return result;
 }
 
-void Dcf77tm::set(const Dcf77time_t timestamp, const int isdst)
+void DCF77tm::set(const DCF77time_t timestamp, const int isdst)
 {
   PRINT_VARIABLE(timestamp);
   long days = timestamp / SECSPERDAY + EPOCH_ADJUSTMENT_DAYS;

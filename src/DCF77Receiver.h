@@ -1,5 +1,5 @@
 /*
-  Dcf77Receiver - Arduino libary receiving and decoding Dcf77 frames Copyright (c)
+  DCF77Receiver - Arduino libary receiving and decoding DCFf77 frames Copyright (c)
   2025 Wolfgang Schmieder.  All right reserved.
 
   Contributors:
@@ -29,7 +29,7 @@
 
 #include <stdint.h>
 #include "internal/ISR_ATTR.h"
-#include "internal/Dcf77base.h"
+#include "internal/DCF77Base.h"
 #include <Arduino.h>
 
 /**
@@ -42,7 +42,7 @@
  * static constexpr int DCF77_PIN = 3;
  *
  * class MyDcf77Receiver : public Dcf77Receiver<DCF77_PIN, FIFO_SIZE> {
- *   void onDcf77FrameReceived(const uint64_t dcf77frame) override {
+ *   void onDCF77FrameReceived(const uint64_t dcf77frame) override {
  *     // convert bit to time structure.
  *     Dcf77tm time;
  *     dcf77frame2time(time, dcf77frame);
@@ -66,7 +66,7 @@
  * }
  *
  * As shown in the above example, derive your own class from Dcf77Receiver
- * and overwrite function 'void onDcf77FrameReceived(const uint64_t dcf77frame)'.
+ * and overwrite function 'void onDCF77FrameReceived(const uint64_t dcf77frame)'.
  *
  * The overridden function will be called whenever a valid dcf77 frame has
  * been received. The frame will be passed as uin64_t integer.
@@ -91,9 +91,9 @@
  * };
  */
 template<int RECEIVER_PIN>
-class Dcf77Receiver : public Dcf77util::Dcf77Base {
+class DCF77Receiver : public DCF77Base {
 public:
-	Dcf77Receiver() {
+  DCF77Receiver() {
 	  // Make this object responsible for receiving
 	  // Dcf77 signals from the pin RECEIVER_PIN.
 		mInstance = this;
@@ -104,12 +104,12 @@ public:
 	 * setup().
 	 */
 	void begin() {
-		Dcf77Base::begin(RECEIVER_PIN, intHandler);
+		DCF77Base::begin(RECEIVER_PIN, intHandler);
 	}
 
 private:
 	/* The instance that is responsible for pin RECEIVE_PIN. */
-	static Dcf77Base* mInstance;
+	static DCF77Base* mInstance;
 
 	/**
 	 * The interrupt handler that is called upon a level change on
@@ -123,6 +123,6 @@ private:
 
 template<int RECEIVER_PIN>
 
-Dcf77util::Dcf77Base *Dcf77Receiver<RECEIVER_PIN>::mInstance = nullptr;
+DCF77Base *DCF77Receiver<RECEIVER_PIN>::mInstance = nullptr;
 
 #endif /* DCF77_RECEIVER_HPP_ */

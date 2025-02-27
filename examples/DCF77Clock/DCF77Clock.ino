@@ -1,5 +1,5 @@
 /*
-  Dcf77Receiver - Arduino libary receiving and decoding Dcf77 frames Copyright (c)
+  DCF77Receiver - Arduino libary receiving and decoding DCF77 frames Copyright (c)
   2025 Wolfgang Schmieder.  All right reserved.
 
   Contributors:
@@ -23,11 +23,11 @@
 */
 
 /**
- * Receive frames from dcf77, convert them to Dcf77tm time structure and
+ * Receive frames from dcf77, convert them to DCF77tm time structure and
  * print them on Serial.
  */
 
-#include "Dcf77Receiver.h"
+#include "DCF77Receiver.h"
 
 // Set the following macro to true if you want to watch when the clock
 // is updated from a received Dcf77 frame.
@@ -50,11 +50,11 @@ static constexpr unsigned MSEC_PER_MINUTE = 60000;
  * Otherwise there will be a systick overrun and the clock
  * will provide wrong results.
  */
-class Dcf77clock : public Dcf77Receiver<DCF77_PIN> {
-  using baseClass = Dcf77Receiver<DCF77_PIN>;
+class DCF77Clock : public DCF77Receiver<DCF77_PIN> {
+  using baseClass = DCF77Receiver<DCF77_PIN>;
 
 public:
-  Dcf77clock()
+  DCF77Clock()
     : mLastDcf77Frame(0), mState(INVALID), mSystickAtLastFrame(0), mAlarm(OUT_OF_SYNCH) {
   }
 
@@ -73,9 +73,9 @@ public:
    *
    * @return false, as long as no Dcf77 frame was received.
    */
-  bool getTime(Dcf77tm& tm, unsigned* millisec) {
+  bool getTime(DCF77tm& tm, unsigned* millisec) {
     if(mState != INVALID) {
-      // Disable interrupts to avoid race condition with onDcf77FrameReceived()
+      // Disable interrupts to avoid race condition with onDCF77FrameReceived()
       // which is updating mSystickAtLastFrame and mLastDcf77Frame.
       noInterrupts();
       const uint32_t millisSinceLastFrame = millis() - mSystickAtLastFrame;
@@ -84,7 +84,7 @@ public:
 
       const uint32_t secSinceLastFrame = millisSinceLastFrame / 1000;
       dcf77frame2time(tm, dcf77frame);
-      const Dcf77time_t timestamp = tm.toTimeStamp();
+      const DCF77time_t timestamp = tm.toTimeStamp();
 
       tm.set(timestamp + secSinceLastFrame, tm.tm_isdst);
       if(millisec != nullptr) {
@@ -101,7 +101,7 @@ public:
       noInterrupts();
       const uint64_t dcf77frame = mLastDcf77Frame;
       interrupts();
-      Dcf77tm tm;
+      DCF77tm tm;
       dcf77frame2time(tm, dcf77frame);
       Serial.print("Dcf77 frame received: ");
       Serial.println(tm);
@@ -133,7 +133,7 @@ private:
    * be executed quickly in order not to prevent other lower
    * priority interrupts to be serviced.
    */
-  void onDcf77FrameReceived(const uint64_t dcf77frame, const uint32_t systick) override {
+  void onDCF77FrameReceived(const uint64_t dcf77frame, const uint32_t systick) override {
     mSystickAtLastFrame = millis();
     mLastDcf77Frame = dcf77frame;
     mState = VALID;
@@ -154,7 +154,7 @@ private:
   ALARM mAlarm;
 };
 
-Dcf77clock dcf77Clock;
+DCF77Clock dcf77Clock;
 
 static constexpr size_t PRINTOUT_PERIOD = 1;
 static uint32_t counter = 0;
@@ -164,7 +164,7 @@ static uint32_t lastSystick = 0;
 void setup()
 {
   Serial.begin(9600);
-  Serial.println("---------- Dcf77clock -----------");
+  Serial.println("---------- DCF77Clock -----------");
   Serial.println("First frame may take some minutes");
   dcf77Clock.begin();
   lastSystick = millis() - PRINTOUT_PERIOD * 1000;
@@ -178,7 +178,7 @@ void loop()
 
   const uint32_t systick = millis();
   if(systick - lastSystick >= PRINTOUT_PERIOD * 1000) {
-    Dcf77tm tm;
+    DCF77tm tm;
     if(dcf77Clock.getTime(tm, nullptr) ) {
       Serial.print(tm);
       Serial.print(", isdst=");
@@ -187,7 +187,7 @@ void loop()
       Serial.print('[');
       Serial.print(counter);
       Serial.print("s]");
-      Serial.print(" Waiting for completion of Dcf77 frame on Arduino pin ");
+      Serial.print(" Waiting for completion of DCF77 frame on Arduino pin ");
       Serial.println(DCF77_PIN);
       counter += PRINTOUT_PERIOD;
     }

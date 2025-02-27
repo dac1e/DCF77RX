@@ -1,5 +1,5 @@
 /*
-  Dcf77Receiver - Arduino libary receiving and decoding Dcf77 frames Copyright (c)
+  DCF77Receiver - Arduino libary receiving and decoding DCFf77 frames Copyright (c)
   2025 Wolfgang Schmieder.  All right reserved.
 
   Contributors:
@@ -22,10 +22,8 @@
   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
 */
 
-#include "Dcf77base.h"
+#include "DCF77Base.h"
 #include <Arduino.h>
-
-namespace Dcf77util {
 
 /**
  * Number of milliseconds to elapse before we assume a "1",
@@ -74,10 +72,10 @@ struct {
 /**
  * Interrupthandler for signal pin
  */
-void Dcf77Base::onPinInterrupt(int pin) {
+void DCF77Base::onPinInterrupt(int pin) {
 	// check the value again - since it takes some time to activate
 	// the interrupt routine, we get a clear signal.
-	Dcf77pulse dcf77signal;
+	DCF77pulse dcf77signal;
 	dcf77signal.mPulseLevel = digitalRead(pin);
 	dcf77signal.mPulseTime = millis();
 
@@ -86,7 +84,7 @@ void Dcf77Base::onPinInterrupt(int pin) {
 	processPulse(dcf77signal);
 }
 
-void Dcf77Base::dcf77frame2time(Dcf77tm &time, const uint64_t& dcf77frame) {
+void DCF77Base::dcf77frame2time(DCF77tm &time, const uint64_t& dcf77frame) {
 	const DCF77bits& bits = reinterpret_cast<const DCF77bits&>(dcf77frame);
 	time.tm_sec = 0;
 	time.tm_min = bits.Min - ((bits.Min / 16) * 6);
@@ -99,7 +97,7 @@ void Dcf77Base::dcf77frame2time(Dcf77tm &time, const uint64_t& dcf77frame) {
 	time.tm_isdst = bits.Z1;
 }
 
-bool Dcf77Base::concludeReceivedBits(uint64_t& dcf77frame) {
+bool DCF77Base::concludeReceivedBits(uint64_t& dcf77frame) {
   bool successfullUpdate = mRxBitBufPos == 59;
   dcf77frame = mRxBitBuffer;
 
@@ -116,7 +114,7 @@ bool Dcf77Base::concludeReceivedBits(uint64_t& dcf77frame) {
 	return successfullUpdate;
 }
 
-void Dcf77Base::appendReceivedBit(const unsigned signalBit) {
+void DCF77Base::appendReceivedBit(const unsigned signalBit) {
 	if (mRxBitBufPos < 59) {
 		mRxBitBuffer = mRxBitBuffer | static_cast<uint64_t>(signalBit) << mRxBitBufPos;
 
@@ -147,14 +145,14 @@ void Dcf77Base::appendReceivedBit(const unsigned signalBit) {
 	}
 }
 
-void Dcf77Base::processPulse(const Dcf77pulse &dcf77signal) {
+void DCF77Base::processPulse(const DCF77pulse &dcf77signal) {
   if (dcf77signal.mPulseLevel == DCF_SIGNAL_STATE_LOW) {
     if (mPreviousPulse.mPulseLevel != DCF_SIGNAL_STATE_LOW) {
       /* falling edge */
       if ((dcf77signal.mPulseTime - mPreviousPulse.mPulseTime) > DCF_SYNC_MILLIS) {
         uint64_t dcf77frame;
         if (concludeReceivedBits(dcf77frame)) {
-          onDcf77FrameReceived(dcf77frame, dcf77signal.mPulseTime);
+          onDCF77FrameReceived(dcf77frame, dcf77signal.mPulseTime);
         }
       }
       mPreviousPulse = dcf77signal;
@@ -170,11 +168,9 @@ void Dcf77Base::processPulse(const Dcf77pulse &dcf77signal) {
   }
 }
 
-void Dcf77Base::begin(int pin, void (*intHandler)()) {
+void DCF77Base::begin(int pin, void (*intHandler)()) {
 	pinMode(pin, INPUT_PULLUP);
 	mPreviousPulse.mPulseLevel = digitalRead(pin);
 	attachInterrupt(digitalPinToInterrupt(pin), intHandler, CHANGE);
 }
-
-} // namespace Dcf77util
 

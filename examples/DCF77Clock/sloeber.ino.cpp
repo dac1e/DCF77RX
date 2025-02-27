@@ -5,12 +5,12 @@
 //This file has been generated on 2025-02-22 14:53:56
 
 #include "Arduino.h"
-#include "Dcf77Receiver.h"
+#include "DCF77Receiver.h"
 
 void setup() ;
 void loop() ;
 
 
-#include "Dcf77clock/Dcf77clock.ino"
+#include "DCF77Clock/DCF77Clock.ino"
 
 #endif
