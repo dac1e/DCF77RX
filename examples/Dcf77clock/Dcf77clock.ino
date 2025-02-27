@@ -109,7 +109,7 @@ public:
     }
 #endif
 
-    if(mAlarm != OUT_OF_SYNCH) {
+    if(mAlarm == IN_SYNC) {
       const uint32_t millisSinceLastFrame =  millis() - mSystickAtLastFrame;
       if(static_cast<uint32_t>(DCF77_FRAME_MISSING_ALARM_TIMEOUT) * MSEC_PER_MINUTE
           <= millisSinceLastFrame) {
