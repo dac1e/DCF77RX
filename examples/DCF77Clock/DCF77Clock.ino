@@ -33,7 +33,7 @@
 // is updated from a received Dcf77 frame.
 #define PRINT_DCF77FRAME_EVENT true
 
-static constexpr int DCF77_PIN = 2;
+static constexpr int DCF77_PIN = 23;
 
 // Create alarm, if there are no frames received for longer than this time.
 // Unit is minutes.
@@ -96,8 +96,28 @@ public:
   }
 
   bool checkAlarm() {
-#if PRINT_DCF77FRAME_EVENT
+    if(mAlarm == IN_SYNC) {
+      const uint32_t millisSinceLastFrame =  millis() - mSystickAtLastFrame;
+      if(static_cast<uint32_t>(DCF77_FRAME_MISSING_ALARM_TIMEOUT) * MSEC_PER_MINUTE
+          <= millisSinceLastFrame) {
+        digitalWrite(LED_OUT_OF_SYNCH, HIGH);
+        Serial.println("Alarm: Dcf77 connection lost.");
+        mAlarm = OUT_OF_SYNCH;
+      } else {
+        if(mState == VALID) {
+          digitalWrite(LED_OUT_OF_SYNCH, LOW);
+        }
+      }
+    } else {
+      if(mAlarm == SYNCH_RECOVERED) {
+        digitalWrite(LED_OUT_OF_SYNCH, LOW);
+        Serial.println("Alarm: Dcf77 connection recovered.");
+        mAlarm = IN_SYNC;
+      }
+    }
+
     if(mState == VALID) {
+#if PRINT_DCF77FRAME_EVENT
       noInterrupts();
       const uint64_t dcf77frame = mLastDcf77Frame;
       interrupts();
@@ -105,25 +125,10 @@ public:
       dcf77frame2time(tm, dcf77frame);
       Serial.print("Dcf77 frame received: ");
       Serial.println(tm);
+#endif
       mState = VALID_AND_REPORTED;
     }
-#endif
 
-    if(mAlarm == IN_SYNC) {
-      const uint32_t millisSinceLastFrame =  millis() - mSystickAtLastFrame;
-      if(static_cast<uint32_t>(DCF77_FRAME_MISSING_ALARM_TIMEOUT) * MSEC_PER_MINUTE
-          <= millisSinceLastFrame) {
-        Serial.println("Alarm: Dcf77 connection lost.");
-        digitalWrite(LED_OUT_OF_SYNCH, HIGH);
-        mAlarm = OUT_OF_SYNCH;
-      }
-    } else {
-      if(mAlarm == SYNCH_RECOVERED) {
-        Serial.println("Alarm: Dcf77 connection recovered.");
-        digitalWrite(LED_OUT_OF_SYNCH, LOW);
-        mAlarm = IN_SYNC;
-      }
-    }
     return mAlarm;
   }
 
@@ -145,11 +150,7 @@ private:
   uint32_t mSystickAtLastFrame;
   uint64_t mLastDcf77Frame;
 
-#if PRINT_DCF77FRAME_EVENT
   enum STATE : int8_t {INVALID, VALID, VALID_AND_REPORTED};
-#else
-  enum STATE : int8_t {INVALID, VALID};
-#endif
   STATE mState;
 
   enum ALARM : int8_t {OUT_OF_SYNCH, SYNCH_RECOVERED, IN_SYNC};
