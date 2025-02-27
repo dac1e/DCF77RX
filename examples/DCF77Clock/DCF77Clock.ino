@@ -33,7 +33,7 @@
 // is updated from a received Dcf77 frame.
 #define PRINT_DCF77FRAME_EVENT true
 
-static constexpr int DCF77_PIN = 23;
+static constexpr int DCF77_PIN = 2;
 
 // Create alarm, if there are no frames received for longer than this time.
 // Unit is minutes.
