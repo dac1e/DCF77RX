@@ -55,7 +55,7 @@ class DCF77Clock : public DCF77Receiver<DCF77_PIN> {
 
 public:
   DCF77Clock()
-    : mLastDcf77Frame(0), mState(INVALID), mSystickAtLastFrame(0), mAlarm(OUT_OF_SYNCH) {
+    : mLastDcf77Frame(0), mState(INVALID), mSystickAtLastFrame(0), mAlarm(IN_SYNC) {
   }
 
   void begin() {
@@ -137,7 +137,9 @@ private:
     mSystickAtLastFrame = millis();
     mLastDcf77Frame = dcf77frame;
     mState = VALID;
-    mAlarm = SYNCH_RECOVERED;
+    if(mAlarm == OUT_OF_SYNCH) {
+      mAlarm = SYNCH_RECOVERED;
+    }
   }
 
   uint32_t mSystickAtLastFrame;
