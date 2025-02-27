@@ -31,24 +31,14 @@
 
 // Set the following macro to true if you want to watch when the clock
 // is updated from a received Dcf77 frame.
-#define PRINT_DCF77FRAME_EVENT false
+#define PRINT_DCF77FRAME_EVENT true
 
-//
-// Note: The Fifo approach was taken to keep the interrupt handler
-//    runtime as short as possible. This is important to not delay
-//    servicing other pending interrupts. Set this macro to true
-//    to observe the Fifo load.
-#define OBSERVE_FIFO_LOAD false
-//
-// Increase FIFO_SIZE if overflows happen. Overflow may happen, when
-// processReceivedBits() isn't called frequently enough in loop().
-static constexpr size_t FIFO_SIZE = 6;
 static constexpr int DCF77_PIN = 2;
 
 // Create alarm, if there are no frames received for longer than this time.
 // Unit is minutes.
 static constexpr unsigned DCF77_FRAME_MISSING_ALARM_TIMEOUT = 3;
-static constexpr int ALARM_LED = LED_BUILTIN;
+static constexpr int LED_OUT_OF_SYNCH = LED_BUILTIN;
 static constexpr unsigned MSEC_PER_MINUTE = 60000;
 
 /**
@@ -60,33 +50,43 @@ static constexpr unsigned MSEC_PER_MINUTE = 60000;
  * Otherwise there will be a systick overrun and the clock
  * will provide wrong results.
  */
-class Dcf77clock : public Dcf77Receiver<DCF77_PIN, FIFO_SIZE> {
-  using baseClass = Dcf77Receiver<DCF77_PIN, FIFO_SIZE>;
+class Dcf77clock : public Dcf77Receiver<DCF77_PIN> {
+  using baseClass = Dcf77Receiver<DCF77_PIN>;
 
 public:
   Dcf77clock()
-    : mLastDcf77timestamp(0), mIsdst(-1), mSystickAtLastFrame(0), mAlarm(false) {
+    : mLastDcf77Frame(0), mState(INVALID), mSystickAtLastFrame(0), mAlarm(OUT_OF_SYNCH) {
   }
 
   void begin() {
-    pinMode(ALARM_LED, OUTPUT);
+    pinMode(LED_OUT_OF_SYNCH, OUTPUT);
+    digitalWrite(LED_OUT_OF_SYNCH, HIGH);
     baseClass::begin();
   }
 
   /**
    * Read the current time.
    *
-   * @param[out] tm. The actual time.
+   * @param[out] tm The actual time.
    * @param[out] millisec The number of expired milliseconds
    *  within the current second.
    *
    * @return false, as long as no Dcf77 frame was received.
    */
   bool getTime(Dcf77tm& tm, unsigned* millisec) {
-    if(mIsdst >= 0) {
+    if(mState != INVALID) {
+      // Disable interrupts to avoid race condition with onDcf77FrameReceived()
+      // which is updating mSystickAtLastFrame and mLastDcf77Frame.
+      noInterrupts();
       const uint32_t millisSinceLastFrame = millis() - mSystickAtLastFrame;
+      const uint64_t dcf77frame = mLastDcf77Frame;
+      interrupts();
+
       const uint32_t secSinceLastFrame = millisSinceLastFrame / 1000;
-      tm.set(mLastDcf77timestamp + secSinceLastFrame, mIsdst);
+      dcf77frame2time(tm, dcf77frame);
+      const Dcf77time_t timestamp = tm.toTimeStamp();
+
+      tm.set(timestamp + secSinceLastFrame, tm.tm_isdst);
       if(millisec != nullptr) {
         *millisec = millisSinceLastFrame % 1000;
       }
@@ -96,54 +96,62 @@ public:
   }
 
   bool checkAlarm() {
-    if(!mAlarm) {
+#if PRINT_DCF77FRAME_EVENT
+    if(mState == VALID) {
+      noInterrupts();
+      const uint64_t dcf77frame = mLastDcf77Frame;
+      interrupts();
+      Dcf77tm tm;
+      dcf77frame2time(tm, dcf77frame);
+      Serial.print("Dcf77 frame received: ");
+      Serial.println(tm);
+      mState = VALID_AND_REPORTED;
+    }
+#endif
+
+    if(mAlarm != OUT_OF_SYNCH) {
       const uint32_t millisSinceLastFrame =  millis() - mSystickAtLastFrame;
-      if(millisSinceLastFrame >=
-          static_cast<uint32_t>(DCF77_FRAME_MISSING_ALARM_TIMEOUT) * MSEC_PER_MINUTE) {
-        raiseAlarm();
+      if(static_cast<uint32_t>(DCF77_FRAME_MISSING_ALARM_TIMEOUT) * MSEC_PER_MINUTE
+          <= millisSinceLastFrame) {
+        Serial.println("Alarm: Dcf77 connection lost.");
+        digitalWrite(LED_OUT_OF_SYNCH, HIGH);
+        mAlarm = OUT_OF_SYNCH;
+      }
+    } else {
+      if(mAlarm == SYNCH_RECOVERED) {
+        Serial.println("Alarm: Dcf77 connection recovered.");
+        digitalWrite(LED_OUT_OF_SYNCH, LOW);
+        mAlarm = IN_SYNC;
       }
     }
     return mAlarm;
   }
 
 private:
-  void onDcf77FrameReceived(const uint64_t dcf77frame) override {
+  /**
+   * This function runs within the interrupt context and must
+   * be executed quickly in order not to prevent other lower
+   * priority interrupts to be serviced.
+   */
+  void onDcf77FrameReceived(const uint64_t dcf77frame, const uint32_t systick) override {
     mSystickAtLastFrame = millis();
-    Dcf77tm tm;
-    dcf77frame2time(tm, dcf77frame);
-    mLastDcf77timestamp = tm.toTimeStamp();
-    mIsdst = tm.tm_isdst;
-#if PRINT_DCF77FRAME_EVENT
-    Serial.print("Dcf77 frame received: ");
-    Serial.println(tm);
-#endif
-    resetAlarm();
+    mLastDcf77Frame = dcf77frame;
+    mState = VALID;
+    mAlarm = SYNCH_RECOVERED;
   }
 
-  void raiseAlarm() {
-    if(!mAlarm) {
-      Serial.println("Alarm: Dcf77 connection lost.");
-      digitalWrite(ALARM_LED, HIGH);
-      mAlarm = true;
-    }
-  }
-
-  void resetAlarm() {
-    if(mAlarm) {
-      Serial.println("Alarm: Dcf77 connection recovered.");
-      digitalWrite(ALARM_LED, LOW);
-      mAlarm = false;
-    }
-  }
-
-  Dcf77time_t mLastDcf77timestamp;
   uint32_t mSystickAtLastFrame;
-  int mIsdst;
-  bool mAlarm;
+  uint64_t mLastDcf77Frame;
 
-#if OBSERVE_FIFO_LOAD
-  size_t pushPulse(const Dcf77pulse &pulse) override;
+#if PRINT_DCF77FRAME_EVENT
+  enum STATE : int8_t {INVALID, VALID, VALID_AND_REPORTED};
+#else
+  enum STATE : int8_t {INVALID, VALID};
 #endif
+  STATE mState;
+
+  enum ALARM : int8_t {OUT_OF_SYNCH, SYNCH_RECOVERED, IN_SYNC};
+  ALARM mAlarm;
 };
 
 Dcf77clock dcf77Clock;
@@ -165,8 +173,7 @@ void setup()
 // The loop function is called in an endless loop
 void loop()
 {
-  // Frequently process received bits.
-  dcf77Clock.processReceivedBits();
+  // Frequently check for alarms.
   dcf77Clock.checkAlarm();
 
   const uint32_t systick = millis();
@@ -187,17 +194,3 @@ void loop()
     lastSystick = systick;
   }
 }
-
-#if OBSERVE_FIFO_LOAD
-  size_t Dcf77clock::pushPulse(const Dcf77pulse &pulse) {
-   const size_t fifoSpaceBeforePush = baseClass::pushPulse(pulse);
-   if(not fifoSpaceBeforePush) {
-     Serial.println("Fifo overflow, load=");
-     Serial.println(FIFO_SIZE);
-   } else {
-     Serial.print("Fifo load=");
-     Serial.println(FIFO_SIZE - fifoSpaceBeforePush + 1);
-   }
-   return fifoSpaceBeforePush;
-  }
-#endif

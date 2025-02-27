@@ -29,37 +29,32 @@
 
 #include "Dcf77Receiver.h"
 
-//
-// Note: The Fifo approach was taken to keep the interrupt handler
-//    runtime as short as possible. This is important to not delay
-//    servicing other pending interrupts. Set this macro to true
-//    to observe the Fifo load.
-#define OBSERVE_FIFO_LOAD false
-//
-// Increase FIFO_SIZE if overflows happen. Overflow may happen, when
-// processReceivedBits() isn't called frequently enough in loop().
-static constexpr size_t FIFO_SIZE = 6;
 static constexpr int DCF77_PIN = 2;
 
 static constexpr size_t PRINTOUT_PERIOD = 1;
-static uint32_t counter = 0;
+static int32_t counter = 0;
 static uint32_t lastSystick = 0;
 
-class MyDcf77Receiver : public Dcf77Receiver<DCF77_PIN, FIFO_SIZE> {
-  void onDcf77FrameReceived(const uint64_t dcf77frame) override {
-    counter = 0;
+class MyDcf77Receiver : public Dcf77Receiver<DCF77_PIN> {
+  uint64_t mDcf77frame = 0;
 
-    // convert frame to time structure.
-    Dcf77tm time;
-    dcf77frame2time(time, dcf77frame);
-    Serial.print("Dcf77 frame received: ");
-    Serial.println(time);
+  /**
+   * This function runs within the interrupt context and must be executed
+   * quickly in order not to prevent other lower priority interrupts to
+   * be serviced.
+   */
+  void onDcf77FrameReceived(const uint64_t dcf77frame, const uint32_t systick) override {
+    counter = -1;
+    mDcf77frame = dcf77frame;
   }
 
-#if OBSERVE_FIFO_LOAD
-  using baseClass = Dcf77Receiver<DCF77_PIN, FIFO_SIZE>;
-  size_t pushPulse(const Dcf77pulse &pulse) override;
-#endif
+public:
+  uint64_t getDcf77frame() const {
+    noInterrupts();
+    const uint64_t result = mDcf77frame;
+    interrupts();
+    return result;
+  }
 };
 
 MyDcf77Receiver myReceiver;
@@ -77,31 +72,28 @@ void setup()
 // The loop function is called in an endless loop
 void loop()
 {
-  // Frequently process received bits.
-  myReceiver.processReceivedBits();
-
   const uint32_t systick = millis();
   if(systick - lastSystick >= PRINTOUT_PERIOD * 1000) {
-    Serial.print('[');
-    Serial.print(counter);
-    Serial.print("s]");
-    Serial.print(" Waiting for completion of Dcf77 frame on Arduino pin ");
-    Serial.println(DCF77_PIN);
+    if(counter < 0) {
+      // Frame received.
+      const uint64_t dcf77frame = myReceiver.getDcf77frame();
+      if( dcf77frame ) {
+        // convert frame to time structure.
+        Dcf77tm time;
+        myReceiver.dcf77frame2time(time, dcf77frame);
+        Serial.print("Dcf77 frame received: ");
+        Serial.println(time);
+      }
+    } else {
+      // Waiting for next frame;
+      Serial.print('[');
+      Serial.print(counter);
+      Serial.print("s]");
+      Serial.print(" Waiting for completion of Dcf77 frame on Arduino pin ");
+      Serial.println(DCF77_PIN);
+    }
+
     counter += PRINTOUT_PERIOD;
     lastSystick = systick;
   }
 }
-
-#if OBSERVE_FIFO_LOAD
-size_t MyDcf77Receiver::pushPulse(const Dcf77pulse &pulse) {
- const size_t fifoSpaceBeforePush = baseClass::pushPulse(pulse);
- if(not fifoSpaceBeforePush) {
-   Serial.println("Fifo overflow, load=");
-   Serial.println(FIFO_SIZE);
- } else {
-   Serial.print("Fifo load=");
-   Serial.println(FIFO_SIZE - fifoSpaceBeforePush + 1);
- }
- return fifoSpaceBeforePush;
-}
-#endif

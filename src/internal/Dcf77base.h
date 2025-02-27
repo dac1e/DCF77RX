@@ -28,7 +28,6 @@
 #define DCF77_INTERNAL_DCF77_BASE_HPP_
 
 #include <stdint.h>
-#include "Dcf77Fifo.h"
 #include "Dcf77tm.h"
 #include "ISR_ATTR.h"
 
@@ -38,8 +37,7 @@ namespace Dcf77util {
 /**
  * This base class does the main work to receive and
  * decode Dcf77 frames. The derived template class
- * Dcf77Receiver provides only the PIN to be used and
- * the Fifo size as compile time template parameters.
+ * Dcf77Receiver provides only the PIN to be used.
  */
 class Dcf77Base {
 public:
@@ -51,37 +49,30 @@ public:
   TEXT_ISR_ATTR_1
   void onPinInterrupt(int pin);
 
-protected:
-	struct Dcf77pulse {uint32_t mPulseLength = 0; int mPulseLevel = 1;};
-
-	/**
-	 * Convert a received dcf77 frame to a tm structure.
-	 *
-	 * @param[out] time The tm structure that will receive the
-	 *  result.
-	 * @param[in]  dcf77frame The frame to be converted.
-	 */
+  /**
+   * Convert a dcf77 frame to a time structure. Type Dcf77tm
+   * is of type to std::tm in case the platform supports it.
+   *
+   * @param[out] time The dcf77 bits as time structure.
+   * @param[in] dcf77frame The dcf77 frame.
+   */
 	static void dcf77frame2time(Dcf77tm &time, const uint64_t& dcf77frame);
+
+protected:
+	struct Dcf77pulse {uint32_t mPulseTime = 0; int mPulseLevel = 1;};
 
 	/**
 	 * Establish interrupt handler for pin.
 	 */
 	void begin(int pin, void (*intHandler)());
 
-  /**
-   * Refer to description of Dcf77Receiver::processReceivedBits().
-   */
-	void processReceivedBits();
-
-	/**
-	 * Callback function to be overridden by the base class to
-	 * obtain a received dcf77 frame.
-	 */
-	virtual void onDcf77FrameReceived(const uint64_t dcf77frame) = 0;
+	TEXT_ISR_ATTR_2_INLINE
+	void processPulse(const Dcf77pulse &dcf77signal);
 
 	/**
 	 * Append a received bit to the rx buffer.
 	 */
+	TEXT_ISR_ATTR_3_INLINE
 	void appendReceivedBit(const unsigned signalBit);
 
 	/**
@@ -95,25 +86,23 @@ protected:
 	 * @ return true, if the receive buffer contained a valid
 	 *  frame. Otherwise false.
 	 */
+	TEXT_ISR_ATTR_3_INLINE
 	bool concludeReceivedBits(uint64_t& dcf77frame);
 
 	/**
-	 * To be overridden by the derived class, to store a pulse
-	 * in the Fifo. Called by onPinInterrupt().
+	 * Callback function to be overridden by the base class to
+	 * obtain a received dcf77 frame. Note that this function
+	 * runs within the interrupt context and must be executed
+	 * quickly in order not to prevent other lower priority
+	 * interrupts to be serviced.
 	 */
-	TEXT_ISR_ATTR_2
-	virtual size_t pushPulse(const Dcf77pulse &pulse) = 0;
-
-	/**
-	 * To be overridden by the derived class, to pop a pulse
-	 * from the Fifo. Called by processReceivedBits().
-	 */
-	virtual size_t popPulse(Dcf77pulse &pulse) = 0;
+	TEXT_ISR_ATTR_4
+	virtual void onDcf77FrameReceived(const uint64_t dcf77frame,
+	    const uint32_t systick) = 0;
 
 private:
   uint64_t mRxBitBuffer = 0;
-  size_t mRxCurrentBitBufferPosition = 0;
-
+  size_t mRxBitBufPos = 0;
   Dcf77pulse mPreviousPulse;
 };
 

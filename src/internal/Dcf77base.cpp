@@ -79,8 +79,11 @@ void Dcf77Base::onPinInterrupt(int pin) {
 	// the interrupt routine, we get a clear signal.
 	Dcf77pulse dcf77signal;
 	dcf77signal.mPulseLevel = digitalRead(pin);
-	dcf77signal.mPulseLength = millis();
-	pushPulse(dcf77signal);
+	dcf77signal.mPulseTime = millis();
+
+//	pushPulse(dcf77signal);
+
+	processPulse(dcf77signal);
 }
 
 void Dcf77Base::dcf77frame2time(Dcf77tm &time, const uint64_t& dcf77frame) {
@@ -97,11 +100,11 @@ void Dcf77Base::dcf77frame2time(Dcf77tm &time, const uint64_t& dcf77frame) {
 }
 
 bool Dcf77Base::concludeReceivedBits(uint64_t& dcf77frame) {
-  bool successfullUpdate = mRxCurrentBitBufferPosition == 59;
+  bool successfullUpdate = mRxBitBufPos == 59;
   dcf77frame = mRxBitBuffer;
 
   // reset buffer
-  mRxCurrentBitBufferPosition = 0;
+  mRxBitBufPos = 0;
   mRxBitBuffer = 0;
 
 	if (successfullUpdate) {
@@ -113,25 +116,25 @@ bool Dcf77Base::concludeReceivedBits(uint64_t& dcf77frame) {
 	return successfullUpdate;
 }
 
-inline void Dcf77Base::appendReceivedBit(const unsigned signalBit) {
-	if (mRxCurrentBitBufferPosition < 59) {
-		mRxBitBuffer = mRxBitBuffer | static_cast<uint64_t>(signalBit) << mRxCurrentBitBufferPosition;
+void Dcf77Base::appendReceivedBit(const unsigned signalBit) {
+	if (mRxBitBufPos < 59) {
+		mRxBitBuffer = mRxBitBuffer | static_cast<uint64_t>(signalBit) << mRxBitBufPos;
 
 		// Update the parity bits. First: Reset when minute, hour or date starts.
-		if (mRxCurrentBitBufferPosition == 21 || mRxCurrentBitBufferPosition == 29 || mRxCurrentBitBufferPosition == 36) {
+		if (mRxBitBufPos == 21 || mRxBitBufPos == 29 || mRxBitBufPos == 36) {
 			flags.parity_flag = 0;
 		}
 
 		// Save the parity when the corresponding segment ends
-		if (mRxCurrentBitBufferPosition == 28) {
+		if (mRxBitBufPos == 28) {
 			flags.parity_min = flags.parity_flag;
 		};
 
-		if (mRxCurrentBitBufferPosition == 35) {
+		if (mRxBitBufPos == 35) {
 			flags.parity_hour = flags.parity_flag;
 		};
 
-		if (mRxCurrentBitBufferPosition == 58) {
+		if (mRxBitBufPos == 58) {
 			flags.parity_date = flags.parity_flag;
 		};
 
@@ -140,34 +143,31 @@ inline void Dcf77Base::appendReceivedBit(const unsigned signalBit) {
 			flags.parity_flag = flags.parity_flag ^ 1;
 		}
 
-		mRxCurrentBitBufferPosition++;
+		mRxBitBufPos++;
 	}
 }
 
-void Dcf77Base::processReceivedBits() {
-	Dcf77pulse dcf77signal;
-	while (popPulse(dcf77signal)) {
-		if (dcf77signal.mPulseLevel == DCF_SIGNAL_STATE_LOW) {
-			if (mPreviousPulse.mPulseLevel != DCF_SIGNAL_STATE_LOW) {
-				/* falling edge */
-				if ((dcf77signal.mPulseLength - mPreviousPulse.mPulseLength) > DCF_SYNC_MILLIS) {
-					uint64_t dcf77frame;
-					if(concludeReceivedBits(dcf77frame)) {
-						onDcf77FrameReceived(dcf77frame);
-					}
-				}
-				mPreviousPulse = dcf77signal;
-			}
-		} else {
-			if (mPreviousPulse.mPulseLevel != DCF_SIGNAL_STATE_HIGH) {
-				/* rising edge */
-				const uint32_t difference = dcf77signal.mPulseLength - mPreviousPulse.mPulseLength;
-				const unsigned bit = difference < DCF_SPLIT_MILLIS ? 0 : 1;
-				appendReceivedBit(bit);
-				mPreviousPulse.mPulseLevel = dcf77signal.mPulseLevel;
-			}
-		}
-	}
+void Dcf77Base::processPulse(const Dcf77pulse &dcf77signal) {
+  if (dcf77signal.mPulseLevel == DCF_SIGNAL_STATE_LOW) {
+    if (mPreviousPulse.mPulseLevel != DCF_SIGNAL_STATE_LOW) {
+      /* falling edge */
+      if ((dcf77signal.mPulseTime - mPreviousPulse.mPulseTime) > DCF_SYNC_MILLIS) {
+        uint64_t dcf77frame;
+        if (concludeReceivedBits(dcf77frame)) {
+          onDcf77FrameReceived(dcf77frame, dcf77signal.mPulseTime);
+        }
+      }
+      mPreviousPulse = dcf77signal;
+    }
+  } else {
+    if (mPreviousPulse.mPulseLevel != DCF_SIGNAL_STATE_HIGH) {
+      /* rising edge */
+      const uint32_t difference = dcf77signal.mPulseTime - mPreviousPulse.mPulseTime;
+      const unsigned bit = difference < DCF_SPLIT_MILLIS ? 0 : 1;
+      appendReceivedBit(bit);
+      mPreviousPulse.mPulseLevel = dcf77signal.mPulseLevel;
+    }
+  }
 }
 
 void Dcf77Base::begin(int pin, void (*intHandler)()) {
