@@ -1,5 +1,5 @@
 /*
-  DCF77Receiver - Arduino libary receiving and decoding DCF77 frames Copyright (c)
+  DCF77RX - Arduino libary receiving and decoding DCF77 frames Copyright (c)
   2025 Wolfgang Schmieder.  All right reserved.
 
   Contributors:
@@ -24,8 +24,8 @@
 
 #pragma once
 
-#ifndef DCF77QINT_INTERNAL_DCF77TM_H_
-#define DCF77QINT_INTERNAL_DCF77TM_H_
+#ifndef DCF77QINT_INTERNAL_DCF77TM_HPP_
+#define DCF77QINT_INTERNAL_DCF77TM_HPP_
 
 
 #include <stdint.h>
@@ -115,4 +115,4 @@
   };
 
 
-#endif /* DCF77QINT_INTERNAL_DCF77TM_H_ */
+#endif /* DCF77QINT_INTERNAL_DCF77TM_HPP_ */

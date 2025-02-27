@@ -1,5 +1,5 @@
 /*
-  DCF77Receiver- Arduino libary receiving and decoding Dcf77 frames Copyright (c)
+  DCF77RX - Arduino libary receiving and decoding DCF77 frames Copyright (c)
   2025 Wolfgang Schmieder.  All right reserved.
 
   Contributors:

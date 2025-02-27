@@ -1,11 +1,11 @@
 /*
-  RcSwitchReceiver - Arduino libary for remote control receiver Copyright (c)
-  2024 Wolfgang Schmieder.  All right reserved.
+  DCF77RX - Arduino libary receiving and decoding DCF77 frames Copyright (c)
+  2025 Wolfgang Schmieder.  All right reserved.
 
   Contributors:
   - Wolfgang Schmieder
 
-  Project home: https://github.com/dac1e/RcSwitchReceiver/
+  Project home: https://github.com/dac1e/Dcf77Receiver/
 
   This library is free software; you can redistribute it and/or modify it
   the terms of the GNU Lesser General Public License as under published

@@ -1,5 +1,5 @@
 /*
-  DCF77Receiver - Arduino libary receiving and decoding DCFf77 frames Copyright (c)
+  DCF77RX - Arduino libary receiving and decoding DCFf77 frames Copyright (c)
   2025 Wolfgang Schmieder.  All right reserved.
 
   Contributors:
@@ -24,8 +24,8 @@
 
 #pragma once
 
-#ifndef DCF77_RECEIVER_HPP_
-#define DCF77_RECEIVER_HPP_
+#ifndef DCF77RX_HPP_
+#define DCF77RX_HPP_
 
 #include <stdint.h>
 #include "internal/ISR_ATTR.h"
@@ -42,7 +42,9 @@
  * static constexpr int DCF77_PIN = 3;
  *
  * class MyDcf77Receiver : public Dcf77Receiver<DCF77_PIN, FIFO_SIZE> {
- *   void onDCF77FrameReceived(const uint64_t dcf77frame) override {
+ *   // This function will be called whenever a valid dcf77 frame has
+ *   // been received. The frame will be passed as uin64_t integer.
+ *   void onDCF77FrameReceived(const uint64_t dcf77frame, const uint32_t systick) override {
  *     // convert bit to time structure.
  *     Dcf77tm time;
  *     dcf77frame2time(time, dcf77frame);
@@ -65,35 +67,10 @@
  *   ...
  * }
  *
- * As shown in the above example, derive your own class from Dcf77Receiver
- * and overwrite function 'void onDCF77FrameReceived(const uint64_t dcf77frame)'.
- *
- * The overridden function will be called whenever a valid dcf77 frame has
- * been received. The frame will be passed as uin64_t integer.
- * Do whatever you want with it. E.g. store it somewhere or convert it to a
- * time structure and print it out. For the conversion to a time structure
- * a static function dcf77frame2time() is available.
- *
- * The time structure is of type std::tm in case the platform supports it.
- * Otherwise it is a proprietary structure with the same fields as std::tm.
- *
- * class MyDcf77Receiver : public Dcf77Receiver<DCF77_PIN, FIFO_SIZE> {
- *   ...
- *   using baseClass = Dcf77Receiver<DCF77_PIN, FIFO_SIZE>;
- *   bool pushPulse(const Dcf77pulse &pulse) override {
- *     const bool ok = baseClass::pushPulse(pulse);
- *     if(not ok) {
- *       Serial.print("overflow");
- *     }
- *     return ok;
- *   }
- *   ...
- * };
  */
-template<int RECEIVER_PIN>
-class DCF77Receiver : public DCF77Base {
+template<int RECEIVER_PIN> class DCF77RX : public DCF77Base {
 public:
-  DCF77Receiver() {
+  DCF77RX() {
 	  // Make this object responsible for receiving
 	  // Dcf77 signals from the pin RECEIVER_PIN.
 		mInstance = this;
@@ -123,6 +100,6 @@ private:
 
 template<int RECEIVER_PIN>
 
-DCF77Base *DCF77Receiver<RECEIVER_PIN>::mInstance = nullptr;
+DCF77Base *DCF77RX<RECEIVER_PIN>::mInstance = nullptr;
 
-#endif /* DCF77_RECEIVER_HPP_ */
+#endif /* DCF77RX_HPP_ */

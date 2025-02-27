@@ -1,5 +1,5 @@
 /*
-  DCF77Receiver - Arduino libary receiving and decoding DCF77 frames Copyright (c)
+  DCF77RX - Arduino libary receiving and decoding DCF77 frames Copyright (c)
   2025 Wolfgang Schmieder.  All right reserved.
 
   Contributors:
@@ -27,7 +27,7 @@
  * print them on Serial.
  */
 
-#include "DCF77Receiver.h"
+#include "DCF77RX.h"
 
 // Set the following macro to true if you want to watch when the clock
 // is updated from a received Dcf77 frame.
@@ -50,8 +50,8 @@ static constexpr unsigned MSEC_PER_MINUTE = 60000;
  * Otherwise there will be a systick overrun and the clock
  * will provide wrong results.
  */
-class DCF77Clock : public DCF77Receiver<DCF77_PIN> {
-  using baseClass = DCF77Receiver<DCF77_PIN>;
+class DCF77Clock : public DCF77RX<DCF77_PIN> {
+  using baseClass = DCF77RX<DCF77_PIN>;
 
 public:
   DCF77Clock()
@@ -166,6 +166,7 @@ static uint32_t lastSystick = 0;
 void setup()
 {
   Serial.begin(9600);
+  Serial.println();
   Serial.println("---------- DCF77Clock -----------");
   Serial.println("First frame may take some minutes");
   dcf77Clock.begin();

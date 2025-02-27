@@ -1,5 +1,5 @@
 /*
-  DCF77Receiver - Arduino libary receiving and decoding DCFf77 frames Copyright (c)
+  DCF77RX - Arduino libary receiving and decoding DCF77 frames Copyright (c)
   2025 Wolfgang Schmieder.  All right reserved.
 
   Contributors:
@@ -27,7 +27,7 @@
  * print them on Serial.
  */
 
-#include "DCF77Receiver.h"
+#include "DCF77RX.h"
 
 static constexpr int DCF77_PIN = 2;
 
@@ -35,7 +35,7 @@ static constexpr size_t PRINTOUT_PERIOD = 1;
 static int32_t counter = 0;
 static uint32_t lastSystick = 0;
 
-class MyDCF77Receiver : public DCF77Receiver<DCF77_PIN> {
+class MyDCF77Receiver : public DCF77RX<DCF77_PIN> {
   uint64_t mDcf77frame = 0;
 
   /**
@@ -63,6 +63,7 @@ MyDCF77Receiver myReceiver;
 void setup()
 {
   Serial.begin(9600);
+  Serial.println();
   Serial.println("-------- PrintDCF77Time ---------");
   Serial.println("First frame may take some minutes");
   myReceiver.begin();
