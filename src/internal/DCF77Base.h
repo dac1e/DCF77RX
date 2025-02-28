@@ -63,6 +63,7 @@ protected:
 	 */
 	void begin(int pin, void (*intHandler)());
 
+private:
 	TEXT_ISR_ATTR_2_INLINE
 	void processPulse(const DCF77pulse &dcf77signal);
 
@@ -97,7 +98,6 @@ protected:
 	virtual void onDCF77FrameReceived(const uint64_t dcf77frame,
 	    const uint32_t systick) = 0;
 
-private:
   uint64_t mRxBitBuffer = 0;
   size_t mRxBitBufPos = 0;
   DCF77pulse mPreviousPulse;
