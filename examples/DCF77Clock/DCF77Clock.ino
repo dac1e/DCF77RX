@@ -23,14 +23,13 @@
 */
 
 /**
- * Receive frames from dcf77, convert them to DCF77tm time structure and
- * print them on Serial.
+ * Receive frames from dcf77, to synchronize a software clock.
  */
 
 #include "DCF77RX.h"
 
-// Set the following macro to true if you want to watch when the clock
-// is updated from a received Dcf77 frame.
+// Set the following macro to true if you want to watch when
+// the clock is updated from a received Dcf77 frame.
 #define PRINT_DCF77FRAME_EVENT true
 
 static constexpr int DCF77_PIN = 2;

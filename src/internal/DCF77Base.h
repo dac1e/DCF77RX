@@ -88,7 +88,7 @@ private:
 	bool concludeReceivedBits(uint64_t& dcf77frame);
 
 	/**
-	 * Callback function to be overridden by the base class to
+	 * Callback function to be overridden by the derived class to
 	 * obtain a received dcf77 frame. Note that this function
 	 * runs within the interrupt context and must be executed
 	 * quickly in order not to prevent other lower priority

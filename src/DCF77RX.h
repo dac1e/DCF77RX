@@ -34,18 +34,18 @@
 
 /**
  * Dcf77Receiver is the main API class. It receives dcf77 pulses on a digital pin.
- * The pin where the receiver is connected is given by parameter RECEIVER_PIN.
+ * The pin where the receiver is connected to, is given by parameter RECEIVER_PIN.
  *
  * Usage:
  *
- * static constexpr size_t FIFO_SIZE = 6; // FIFO_SIZE is an optional parameter.
  * static constexpr int DCF77_PIN = 3;
  *
- * class MyDcf77Receiver : public Dcf77Receiver<DCF77_PIN, FIFO_SIZE> {
- *   // This function will be called whenever a valid dcf77 frame has
- *   // been received. The frame will be passed as uin64_t integer.
+ * class MyDcf77Receiver : public Dcf77Receiver<DCF77_PIN> {
+ *   // This function will be called whenever a valid dcf77 frame
+ *   // has been received. The actual system tick time stamp in
+ *   // unit of milliseconds is passed in addition.
  *   void onDCF77FrameReceived(const uint64_t dcf77frame, const uint32_t systick) override {
- *     // convert bit to time structure.
+ *     // convert dcf77frame to time structure.
  *     Dcf77tm time;
  *     dcf77frame2time(time, dcf77frame);
  *     ...
@@ -62,8 +62,6 @@
  * }
  *
  * void loop() {
- *   ...
- *   myReceiver.processReceivedBits();
  *   ...
  * }
  *
