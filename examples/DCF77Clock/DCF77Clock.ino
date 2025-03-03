@@ -138,7 +138,7 @@ private:
    * priority interrupts to be serviced.
    */
   void onDCF77FrameReceived(const uint64_t dcf77frame, const uint32_t systick) override {
-    mSystickAtLastFrame = millis();
+    mSystickAtLastFrame = systick;
     mLastDcf77Frame = dcf77frame;
     mState = VALID;
     if(mAlarm == OUT_OF_SYNCH) {
