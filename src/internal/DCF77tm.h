@@ -35,6 +35,12 @@
 #define HAS_STD_CTIME true
 #endif
 
+#ifdef ARDUINO_ARCH_MBED
+typedef arduino::Printable printable_t;
+#else
+typedef Printable printable_t;
+#endif
+
 #if HAS_STD_CTIME
   /** Use std::tm and std::time_t */
   #include <ctime>
@@ -43,7 +49,7 @@
   using DCF77time_t = std::time_t;
 
   // See https://en.cppreference.com/w/cpp/chrono/c/tm
-  struct DCF77tm : public std::tm, public Printable {
+  struct DCF77tm : public std::tm, public printable_t {
 
 
 #else
@@ -53,7 +59,7 @@
   using DCF77time_t = uint32_t;
 
   // See https://en.cppreference.com/w/cpp/chrono/c/tm
-  struct DCF77tm : public Printable {
+  struct DCF77tm : public printable_t {
     int tm_sec;
     int tm_min;
     int tm_hour;
