@@ -29,7 +29,8 @@
 
 
 #include <stdint.h>
-#include <printable.h>
+#include <Printable.h>
+#include <Print.h>
 
 #ifndef ARDUINO_ARCH_AVR
 #define HAS_STD_CTIME true
@@ -37,8 +38,10 @@
 
 #ifdef ARDUINO_ARCH_MBED
 typedef arduino::Printable printable_t;
+typedef arduino::Print print_t;
 #else
 typedef Printable printable_t;
+typedef Print print_t;
 #endif
 
 #if HAS_STD_CTIME
@@ -117,7 +120,7 @@ typedef Printable printable_t;
      *
      *   Serial.println(tm);
      */
-    size_t printTo(Print& p) const override;
+    size_t printTo(print_t& p) const override;
   };
 
 

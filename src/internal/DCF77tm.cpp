@@ -106,7 +106,7 @@ inline int yday(const DCF77tm& tm) {
 
 #if HAS_STD_CTIME
 
-size_t DCF77tm::printTo(Print& p) const {
+size_t DCF77tm::printTo(print_t& p) const {
   char buffer[26];
   asctime_r(this, buffer);
   buffer[24] = '\0'; // remove /n
@@ -118,7 +118,7 @@ size_t DCF77tm::printTo(Print& p) const {
 static const char* MO[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
 static const char* WD[] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
 
-size_t DCF77tm::printTo(Print& p) const {
+size_t DCF77tm::printTo(print_t& p) const {
   size_t n = 0;
 
   n+= p.print(WD[tm_wday]); // day of week
