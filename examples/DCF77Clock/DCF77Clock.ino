@@ -95,6 +95,10 @@ public:
   }
 
   bool checkAlarm() {
+    // State is queried 2 times below. Hence save mState in state to avoid
+    // race condition with interrupt calling onDCF77FrameReceived().
+    STATE state = mState;
+
     if(mAlarm == IN_SYNC) {
       // Save mSystickAtLastFrame in systickAtLastFrame for the calculation
       // of millisSinceLastFrame to avoid a race condition.
@@ -110,7 +114,7 @@ public:
         digitalWrite(LED_OUT_OF_SYNCH, HIGH);
         Serial.println("Alarm: Dcf77 connection lost.");
       } else {
-        if(mState == VALID) {
+        if(state == VALID) {
           digitalWrite(LED_OUT_OF_SYNCH, LOW);
         }
       }
@@ -122,7 +126,7 @@ public:
       }
     }
 
-    if(mState == VALID) {
+    if(state == VALID) {
 #if PRINT_DCF77FRAME_EVENT
       noInterrupts();
       const uint64_t dcf77frame = mLastDcf77Frame;
