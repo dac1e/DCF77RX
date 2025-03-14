@@ -32,7 +32,7 @@
 // the clock is updated from a received Dcf77 frame.
 #define PRINT_DCF77FRAME_EVENT true
 
-static constexpr int DCF77_PIN = 2;
+static constexpr int DCF77_PIN = 23;
 
 // Create alarm, if there are no frames received for longer than this time.
 // Unit is minutes.
@@ -96,12 +96,19 @@ public:
 
   bool checkAlarm() {
     if(mAlarm == IN_SYNC) {
-      const uint32_t millisSinceLastFrame =  millis() - mSystickAtLastFrame;
+      // Save mSystickAtLastFrame in systickAtLastFrame for the calculation
+      // of millisSinceLastFrame to avoid a race condition.
+      // If we would get an interrupt calling onDCF77FrameReceived()
+      // after the call of millis(), we would get a negative
+      // result for the calculation of millis() - systickAtLastFrame,
+      // and millisSinceLastFrame would be wrong.
+      const uint32_t systickAtLastFrame = mSystickAtLastFrame;
+      const uint32_t millisSinceLastFrame = millis() - systickAtLastFrame;
       if(static_cast<uint32_t>(DCF77_FRAME_MISSING_ALARM_TIMEOUT) * MSEC_PER_MINUTE
           <= millisSinceLastFrame) {
+        mAlarm = OUT_OF_SYNCH;
         digitalWrite(LED_OUT_OF_SYNCH, HIGH);
         Serial.println("Alarm: Dcf77 connection lost.");
-        mAlarm = OUT_OF_SYNCH;
       } else {
         if(mState == VALID) {
           digitalWrite(LED_OUT_OF_SYNCH, LOW);
@@ -109,9 +116,9 @@ public:
       }
     } else {
       if(mAlarm == SYNCH_RECOVERED) {
+        mAlarm = IN_SYNC;
         digitalWrite(LED_OUT_OF_SYNCH, LOW);
         Serial.println("Alarm: Dcf77 connection recovered.");
-        mAlarm = IN_SYNC;
       }
     }
 
