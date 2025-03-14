@@ -51,10 +51,11 @@ typedef Print print_t;
   // See  https://en.cppreference.com/w/cpp/chrono/c/time_t
   using DCF77time_t = std::time_t;
 
+
   // See https://en.cppreference.com/w/cpp/chrono/c/tm
   struct DCF77tm : public std::tm, public printable_t {
 
-
+  static size_t print(print_t& p, const std::tm& time);
 #else
   /** Define own tm and time_t */
 
@@ -72,6 +73,10 @@ typedef Print print_t;
     int tm_wday;
     int tm_yday;
     int tm_isdst; // daylight savings active = 1
+
+    static size_t print(print_t& p, const DCF77tm& time) {
+  		return time.printTo(p);
+  	}
 
 #endif /* HAS_STD_CTIME */
 
@@ -100,7 +105,6 @@ typedef Print print_t;
      */
     void set(const DCF77time_t timestamp, const int isdst);
 
-  private:
     /**
      * Implementation of the Printable interface, which
      * allows to print this tm structure.

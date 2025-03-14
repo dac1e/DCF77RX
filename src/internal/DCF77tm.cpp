@@ -106,11 +106,15 @@ inline int yday(const DCF77tm& tm) {
 
 #if HAS_STD_CTIME
 
-size_t DCF77tm::printTo(print_t& p) const {
+size_t DCF77tm::print(print_t& p, const std::tm& time) {
   char buffer[26];
-  asctime_r(this, buffer);
+  asctime_r(&time, buffer);
   buffer[24] = '\0'; // remove /n
   return p.print(buffer);
+}
+
+size_t DCF77tm::printTo(print_t& p) const {
+  return print(p, *this);
 }
 
 #else
